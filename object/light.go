@@ -2,37 +2,31 @@ package object
 
 import (
 	"image/color"
-	//"tulip/vector3d"
+	"tulip/mymath"
 )
 
 type Light struct {
-	//clr color.Color
 	Intensity float64
-	Pos       Point
-	Direction Vector3d
+	Pos       mymath.Vector3d
+	Direction mymath.Vector3d
 }
 
-func NewLight(intensity float64, pos Point) *Light {
+func NewLight(intensity float64, pos, direction mymath.Vector3d) *Light {
 	light := new(Light)
 
-	//light.clr = clr
 	light.Intensity = intensity
 	light.Pos = pos
-	light.Direction = Make(-1.0, 0.0, 0.0)
+	light.Direction = direction
 
 	return light
 }
 
-func CalculateIntensity(v Vertex, l Light) float64 {
-	//lightDir := MakeTwoPoints(v.Point, l.pos)
-	//fmt.Println(v.Normal)
-	return l.Intensity * (1) * (float64(cosAlpha(l.Direction, v.Normal)))
+func VertexIntensity(v Vertex, l Light) float64 {
+	return l.Intensity * (1) * (float64(mymath.CosAlpha(l.Direction, v.Normal)))
 }
 
-func CalculateIntensityVector(v Vector3d, l Light) float64 {
-	//lightDir := MakeTwoPoints(v.Point, l.pos)
-	//fmt.Println(v.Normal)
-	intensity := l.Intensity * (1) * (float64(cosAlpha(l.Direction, v)))
+func VectorIntensity(v mymath.Vector3d, l Light) float64 {
+	intensity := l.Intensity * (1) * (float64(mymath.CosAlpha(l.Direction, v)))
 
 	if intensity > 1 {
 		intensity = 1

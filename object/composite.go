@@ -1,5 +1,9 @@
 package object
 
+import (
+	"tulip/mymath"
+)
+
 type CompositeModel struct {
 	Components []PolygonialModel
 }
@@ -18,28 +22,20 @@ func (c CompositeModel) IterateOverPolygons(f PolygonialFunc) {
 	}
 }
 
-func (c *CompositeModel) Scale(center Point, k float64) {
+func (c *CompositeModel) Scale(center mymath.Vector3d, k float64) {
 	for i := range c.Components {
 		c.Components[i].Scale(center, k)
 	}
 }
 
-func (c *CompositeModel) Move(delta Point) {
+func (c *CompositeModel) Move(delta mymath.Vector3d) {
 	for i := range c.Components {
 		c.Components[i].Move(delta)
 	}
 }
 
-func (c *CompositeModel) Rotate(center, angles Point) {
+func (c *CompositeModel) Rotate(center, angles mymath.Vector3d) {
 	for i := range c.Components {
 		c.Components[i].Rotate(center, angles)
 	}
 }
-
-// func (c CompositeModel) SingleModel() Model {
-// 	var combined Model
-
-// 	for i := range c.Components {
-
-// 	}
-// }

@@ -1,9 +1,9 @@
 package graphics
 
 import (
-	//"fmt"
 	"image"
 	"image/color"
+	"tulip/mymath"
 	"tulip/object"
 )
 
@@ -33,49 +33,45 @@ func (engine *ZBufferGraphicsEngine) initBuf(h, w int, value float64) {
 	}
 }
 
-func projection(h int, v object.Point) (int, int) {
+func projection(h int, v mymath.Vector3d) (int, int) {
 	return int(v.X), h - int(v.Y)
 }
 
 func (engine ZBufferGraphicsEngine) RenderPolygon(v1, v2, v3 object.Vertex, clr color.NRGBA) {
 	cnv := engine.Cnv
 
-	if v1.Y > v2.Y {
+	if v1.Point.Y > v2.Point.Y {
 		v1, v2 = v2, v1
 	}
-	if v1.Y > v3.Y {
+	if v1.Point.Y > v3.Point.Y {
 		v1, v3 = v3, v1
 	}
-	if v2.Y > v3.Y {
+	if v2.Point.Y > v3.Point.Y {
 		v2, v3 = v3, v2
 	}
 
-	total_dy := v3.Y - v1.Y
+	total_dy := v3.Point.Y - v1.Point.Y
 
 	light := engine.light
 
-	v1_intensity := object.CalculateIntensity(v1, light)
-	v2_intensity := object.CalculateIntensity(v2, light)
-	v3_intensity := object.CalculateIntensity(v3, light)
+	v1_intensity := object.VertexIntensity(v1, light)
+	v2_intensity := object.VertexIntensity(v2, light)
+	v3_intensity := object.VertexIntensity(v3, light)
 
-	//fmt.Println(v1_intensity, v2_intensity, v3_intensity)
+	for y := v1.Point.Y; y <= v2.Point.Y; y++ {
+		segment_dy := v2.Point.Y - v1.Point.Y + 1
+		alpha := float64((y - v1.Point.Y) / total_dy)
+		beta := float64((y - v1.Point.Y) / segment_dy)
 
-	//fmt.Println("rendering")
+		var a, b mymath.Vector3d
 
-	for y := v1.Y; y <= v2.Y; y++ {
-		segment_dy := v2.Y - v1.Y + 1
-		alpha := float64((y - v1.Y) / total_dy)
-		beta := float64((y - v1.Y) / segment_dy)
+		a = mymath.Vector3dDiff(v3.Point, v1.Point)
+		a.Mul(alpha)
+		a.Add(v1.Point)
 
-		var a, b object.Point
-
-		a = v3.Sub(v1.Point)
-		a = a.Mul(alpha)
-		a = a.Add(v1.Point)
-
-		b = v2.Sub(v1.Point)
-		b = b.Mul(beta)
-		b = b.Add(v1.Point)
+		b = mymath.Vector3dDiff(v2.Point, v1.Point)
+		b.Mul(beta)
+		b.Add(v1.Point)
 
 		if a.X > b.X {
 			a, b = b, a
@@ -93,7 +89,7 @@ func (engine ZBufferGraphicsEngine) RenderPolygon(v1, v2, v3 object.Vertex, clr 
 		for x := a.X; x <= b.X; x++ {
 			var (
 				phi float64
-				p   object.Point
+				p   mymath.Vector3d
 			)
 
 			if a.X == b.X {
@@ -116,26 +112,25 @@ func (engine ZBufferGraphicsEngine) RenderPolygon(v1, v2, v3 object.Vertex, clr 
 					pixel_x, pixel_y := projection(cnv.height(), p)
 
 					cnv.setPixel(pixel_x, pixel_y, object.Lightness(clr, intensity))
-					// cnv.setPixel(pixel_x, pixel_y, clr)
 				}
 			}
 		}
 	}
 
-	for y := v2.Y; y <= v3.Y; y++ {
-		segment_dy := v3.Y - v2.Y + 1
-		alpha := float64((y - v1.Y) / total_dy)
-		beta := float64((y - v2.Y) / segment_dy)
+	for y := v2.Point.Y; y <= v3.Point.Y; y++ {
+		segment_dy := v3.Point.Y - v2.Point.Y + 1
+		alpha := float64((y - v1.Point.Y) / total_dy)
+		beta := float64((y - v2.Point.Y) / segment_dy)
 
-		var a, b object.Point
+		var a, b mymath.Vector3d
 
-		a = v3.Sub(v1.Point)
-		a = a.Mul(alpha)
-		a = a.Add(v1.Point)
+		a = mymath.Vector3dDiff(v3.Point, v1.Point)
+		a.Mul(alpha)
+		a.Add(v1.Point)
 
-		b = v3.Sub(v2.Point)
-		b = b.Mul(beta)
-		b = b.Add(v2.Point)
+		b = mymath.Vector3dDiff(v3.Point, v2.Point)
+		b.Mul(beta)
+		b.Add(v2.Point)
 
 		if a.X > b.X {
 			a, b = b, a
@@ -153,7 +148,7 @@ func (engine ZBufferGraphicsEngine) RenderPolygon(v1, v2, v3 object.Vertex, clr 
 		for x := a.X; x <= b.X; x++ {
 			var (
 				phi float64
-				p   object.Point
+				p   mymath.Vector3d
 			)
 
 			if a.X == b.X {
@@ -169,49 +164,34 @@ func (engine ZBufferGraphicsEngine) RenderPolygon(v1, v2, v3 object.Vertex, clr 
 
 			intensity := i1 + (i2-i1)*phi
 
-			//fmt.Println(i1, i2, phi)
-
 			if x >= 0 && y >= 0 && x < float64(engine.Cnv.width()) && y < float64(engine.Cnv.height()) {
 				if engine.zbuf[int(x)][int(y)] < p.Z {
 					engine.zbuf[int(x)][int(y)] = p.Z
 					pixel_x, pixel_y := projection(cnv.height(), p)
 					cnv.setPixel(pixel_x, pixel_y, object.Lightness(clr, intensity))
-					// cnv.setPixel(pixel_x, pixel_y, clr)
 				}
-
 			}
 		}
 	}
-
-	//cnv.drawLine(int(v1.X), cnv.height()-int(v1.Y), int(v1.X+v1.Normal.X), cnv.height()-int(v1.Y+v1.Normal.Y), color.Black)
-	//cnv.drawLine(int(v2.X), cnv.height()-int(v2.Y), int(v2.X+v2.Normal.X), cnv.height()-int(v2.Y+v2.Normal.Y), color.Black)
-	//cnv.drawLine(int(v3.X), cnv.height()-int(v3.Y), int(v3.X+v3.Normal.X), cnv.height()-int(v3.Y+v3.Normal.Y), color.Black)
 }
 
 func (engine ZBufferGraphicsEngine) RenderWire(v1, v2, v3 object.Vertex, clr color.NRGBA) {
 	cnv := engine.Cnv
-	cnv.drawLine(int(v1.X), cnv.height()-int(v1.Y), int(v2.X), cnv.height()-int(v2.Y), color.RGBA{0, 0, 0, 255})
-	cnv.drawLine(int(v1.X), cnv.height()-int(v1.Y), int(v3.X), cnv.height()-int(v3.Y), color.RGBA{0, 0, 0, 255})
-	cnv.drawLine(int(v2.X), cnv.height()-int(v2.Y), int(v3.X), cnv.height()-int(v3.Y), color.RGBA{0, 0, 0, 255})
+	cnv.drawLine(int(v1.Point.X), cnv.height()-int(v1.Point.X), int(v2.Point.X), cnv.height()-int(v2.Point.X), color.RGBA{0, 0, 0, 255})
+	cnv.drawLine(int(v1.Point.X), cnv.height()-int(v1.Point.X), int(v3.Point.X), cnv.height()-int(v3.Point.X), color.RGBA{0, 0, 0, 255})
+	cnv.drawLine(int(v2.Point.X), cnv.height()-int(v2.Point.X), int(v3.Point.X), cnv.height()-int(v3.Point.X), color.RGBA{0, 0, 0, 255})
 }
 
 func (engine ZBufferGraphicsEngine) RenderNormals(v1, v2, v3 object.Vertex, clr color.NRGBA) {
 	cnv := engine.Cnv
-	cnv.drawLine(int(v1.X), cnv.height()-int(v1.Y), int(v1.X+v1.Normal.X), cnv.height()-int(v1.Y+v1.Normal.Y), color.RGBA{0, 0, 0, 255})
-	cnv.drawLine(int(v2.X), cnv.height()-int(v2.Y), int(v2.X+v2.Normal.X), cnv.height()-int(v2.Y+v2.Normal.Y), color.RGBA{0, 0, 0, 255})
-	cnv.drawLine(int(v3.X), cnv.height()-int(v3.Y), int(v3.X+v3.Normal.X), cnv.height()-int(v3.Y+v3.Normal.Y), color.RGBA{0, 0, 0, 255})
+	cnv.drawLine(int(v1.Point.X), cnv.height()-int(v1.Point.X), int(v1.Point.X+v1.Normal.X), cnv.height()-int(v1.Point.X+v1.Normal.X), color.RGBA{0, 0, 0, 255})
+	cnv.drawLine(int(v2.Point.X), cnv.height()-int(v2.Point.X), int(v2.Point.X+v2.Normal.X), cnv.height()-int(v2.Point.X+v2.Normal.X), color.RGBA{0, 0, 0, 255})
+	cnv.drawLine(int(v3.Point.X), cnv.height()-int(v3.Point.X), int(v3.Point.X+v3.Normal.X), cnv.height()-int(v3.Point.X+v3.Normal.X), color.RGBA{0, 0, 0, 255})
 }
 
 func (engine ZBufferGraphicsEngine) RenderModel(obj object.PolygonialModel) {
-
-	//obj.SortVertices()
 	obj.IterateOverPolygons(engine.RenderPolygon)
-	//obj.IterateOverPolygons(engine.RenderWire)
-	//obj.IterateOverPolygons(engine.RenderNormals)
-	//DrawObject(cnv, obj)
 }
-
-// TODO NewGraphicsEngine
 
 func (engine ZBufferGraphicsEngine) RenderScene(scn object.Scene) {
 	engine.light = scn.LightSource

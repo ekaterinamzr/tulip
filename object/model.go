@@ -2,12 +2,12 @@ package object
 
 import (
 	"image/color"
+	"tulip/mymath"
 )
 
 type Model struct {
 	Vertices []Vertex
 	Polygons []Polygon
-	//Normals  []Vector3d
 }
 
 type PolygonialFunc func(v1, v2, v3 Vertex, clr color.NRGBA)
@@ -15,38 +15,15 @@ type PolygonialFunc func(v1, v2, v3 Vertex, clr color.NRGBA)
 type PolygonialModel interface {
 	IterateOverPolygons(f PolygonialFunc)
 
-	Scale(center Point, k float64)
-	Move(delta Point)
-	Rotate(center, angles Point)
+	Scale(center mymath.Vector3d, k float64)
+	Move(delta mymath.Vector3d)
+	Rotate(center, angles mymath.Vector3d)
 
 	Animate(k float64)
 }
 
 func (m *Model) Animate(k float64) {
 
-}
-
-func (m *Model) CalculateNormals() {
-	for _, p := range m.Polygons {
-		v1, v2, v3 := m.Vertices[p.V1], m.Vertices[p.V2], m.Vertices[p.V3]
-
-		//fmt.Println(v1.Point, v3.Point, v3.Point)
-		normal := PolygonNormal(v1, v2, v3)
-
-		//fmt.Println(normal)
-
-		m.Vertices[p.V1].Normal.Add(normal)
-		m.Vertices[p.V2].Normal.Add(normal)
-		m.Vertices[p.V3].Normal.Add(normal)
-
-		m.Vertices[p.V1].cnt++
-		m.Vertices[p.V2].cnt++
-		m.Vertices[p.V3].cnt++
-	}
-
-	for i := range m.Vertices {
-		m.Vertices[i].Normal.Mul(1.0 / float64(m.Vertices[i].cnt))
-	}
 }
 
 func (m Model) IterateOverPolygons(f PolygonialFunc) {
@@ -57,9 +34,9 @@ func (m Model) IterateOverPolygons(f PolygonialFunc) {
 	}
 }
 
-func (m *Model) AddPoint(p Point) {
+func (m *Model) AddPoint(p mymath.Vector3d) {
 	var v Vertex
-	v.X, v.Y, v.Z = p.X, p.Y, p.Z
+	v.Point = p
 	m.Vertices = append(m.Vertices, v)
 }
 
@@ -70,43 +47,26 @@ func (m *Model) AddPolygon(v1, v2, v3 int, clr color.NRGBA) {
 	m.Polygons = append(m.Polygons, p)
 }
 
-func (o *Model) SortVertices() {
-	for i, p := range o.Polygons {
-		if o.Vertices[p.V1].Y > o.Vertices[p.V2].Y {
-			o.Polygons[i].V1, o.Polygons[i].V2 = o.Polygons[i].V2, o.Polygons[i].V1
-			//o.Vertices[p.V1], o.Vertices[p.V2] = o.Vertices[p.V2], o.Vertices[p.V1]
-		}
-		if o.Vertices[p.V1].Y > o.Vertices[p.V3].Y {
-			o.Polygons[i].V1, o.Polygons[i].V3 = o.Polygons[i].V3, o.Polygons[i].V1
-			//o.Vertices[p.V1], o.Vertices[p.V3] = o.Vertices[p.V3], o.Vertices[p.V1]
-		}
-		if o.Vertices[p.V2].Y > o.Vertices[p.V3].Y {
-			o.Polygons[i].V2, o.Polygons[i].V3 = o.Polygons[i].V3, o.Polygons[i].V2
-			//o.Vertices[p.V2], o.Vertices[p.V3] = o.Vertices[p.V3], o.Vertices[p.V2]
-		}
-	}
-}
-
-func (m *Model) Scale(center Point, k float64) {
+func (m *Model) Scale(center mymath.Vector3d, k float64) {
 	for i := range m.Vertices {
 		m.Vertices[i].Scale(center, k)
 	}
 }
 
-func (m *Model) Move(delta Point) {
+func (m *Model) Move(delta mymath.Vector3d) {
 	for i := range m.Vertices {
 		m.Vertices[i].Move(delta)
 	}
 }
 
-func (m *Model) Rotate(center, angles Point) {
+func (m *Model) Rotate(center, angles mymath.Vector3d) {
 	for i := range m.Vertices {
 		m.Vertices[i].Rotate(center, angles)
 	}
 }
 
-func (m *Model) Flip(x, y, z bool) {
+func (m *Model) Reflect(x, y, z bool) {
 	for i := range m.Vertices {
-		m.Vertices[i].Flip(x, y, z)
+		m.Vertices[i].Reflect(x, y, z)
 	}
 }

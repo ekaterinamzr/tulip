@@ -2,6 +2,7 @@ package object
 
 import (
 	"image/color"
+	"tulip/mymath"
 )
 
 type Scene struct {
@@ -15,8 +16,8 @@ func (scn *Scene) AddObject(obj PolygonialModel) {
 	scn.Objects = append(scn.Objects, obj)
 }
 
-func (scn *Scene) SetLight(intensity float64, pos Point) {
-	light := NewLight(intensity, pos)
+func (scn *Scene) SetLight(intensity float64, pos, dir mymath.Vector3d) {
+	light := NewLight(intensity, pos, dir)
 	scn.LightSource = *light
 }
 
