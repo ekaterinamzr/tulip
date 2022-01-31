@@ -5,10 +5,10 @@ import (
 	//"fmt"
 
 	"image/color"
+	"math"
 
 	// "image/draw"
 
-	"math"
 	"time"
 	"tulip/flower"
 	"tulip/graphics"
@@ -30,8 +30,8 @@ func main() {
 	a := app.New()
 	w := a.NewWindow("Tulip")
 
-	tulip1 := flower.NewTulip(mymath.Vector3d{100, 0, 0}, 1)
-	tulip2 := flower.NewTulip(mymath.Vector3d{300, 0, -400}, 2)
+	tulip1 := flower.NewTulip(mymath.Vector3d{0, 0, 100}, 1, 2)
+	tulip2 := flower.NewTulip(mymath.Vector3d{100, 0, 200}, 2, 2)
 
 	var delay time.Duration = 50
 
@@ -45,7 +45,7 @@ func main() {
 	scene.AddObject(tulip2)
 
 	w.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
-		scene.Objects[0].Rotate(mymath.Vector3d{100, 0, 0}, mymath.Vector3d{0, 10, 0})
+		scene.Objects[0].Rotate(mymath.Vector3d{0, 0, 100}, mymath.Vector3d{0, 10, 0})
 	})
 
 	go func() {

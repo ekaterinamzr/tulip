@@ -3,6 +3,7 @@ package graphics
 import (
 	"image"
 	"image/color"
+	"math"
 	"tulip/mymath"
 	"tulip/object"
 )
@@ -21,6 +22,29 @@ type ZBufferGraphicsEngine struct {
 	Cnv   Canvas
 	zbuf  [][]float64
 	light object.Light
+
+	fNear        float64
+	fFar         float64
+	fFov         float64
+	fAspectRatio float64
+	fFovRad      float64
+
+	mProjection mymath.Matrix4x4
+}
+
+func (engine *ZBufferGraphicsEngine) initProjection() {
+	engine.fNear = 0.1
+	engine.fFar = 1000.0
+	engine.fFov = 90.0
+	engine.fAspectRatio = float64(engine.Cnv.height()) / float64(engine.Cnv.width())
+	engine.fFovRad = 1.0 / math.Tan((engine.fFov*0.5)/180.0*math.Pi)
+
+	engine.mProjection[0][0] = engine.fAspectRatio * engine.fFovRad
+	engine.mProjection[1][1] = engine.fFovRad
+	engine.mProjection[2][2] = engine.fFar / (engine.fFar - engine.fNear)
+	engine.mProjection[3][2] = (-engine.fFar * engine.fNear) / (engine.fFar - engine.fNear)
+	engine.mProjection[2][3] = 1.0
+	engine.mProjection[3][3] = 0.0
 }
 
 func (engine *ZBufferGraphicsEngine) initBuf(h, w int, value float64) {
@@ -39,6 +63,21 @@ func projection(h int, v mymath.Vector3d) (int, int) {
 
 func (engine ZBufferGraphicsEngine) RenderPolygon(v1, v2, v3 object.Vertex, clr color.NRGBA) {
 	cnv := engine.Cnv
+
+	v1.Point.MulMatrix(engine.mProjection)
+	v2.Point.MulMatrix(engine.mProjection)
+	v3.Point.MulMatrix(engine.mProjection)
+
+	v1.Point.Add(mymath.MakeVector3d(1.0, 1.0, 0.0))
+	v2.Point.Add(mymath.MakeVector3d(1.0, 1.0, 0.0))
+	v3.Point.Add(mymath.MakeVector3d(1.0, 1.0, 0.0))
+
+	v1.Point.X *= 0.5 * float64(engine.Cnv.width())
+	v1.Point.Y *= 0.5 * float64(engine.Cnv.height())
+	v2.Point.X *= 0.5 * float64(engine.Cnv.width())
+	v2.Point.Y *= 0.5 * float64(engine.Cnv.height())
+	v3.Point.X *= 0.5 * float64(engine.Cnv.width())
+	v3.Point.Y *= 0.5 * float64(engine.Cnv.height())
 
 	if v1.Point.Y > v2.Point.Y {
 		v1, v2 = v2, v1
@@ -107,9 +146,10 @@ func (engine ZBufferGraphicsEngine) RenderPolygon(v1, v2, v3 object.Vertex, clr 
 
 			// transform coordinates
 			if x >= 0 && y >= 0 && x < float64(engine.Cnv.width()) && y < float64(engine.Cnv.height()) {
-				if engine.zbuf[int(x)][int(y)] < p.Z {
+				if engine.zbuf[int(x)][int(y)] > p.Z {
 					engine.zbuf[int(x)][int(y)] = p.Z
 					pixel_x, pixel_y := projection(cnv.height(), p)
+					// pixel_x, pixel_y := int(math.Round(p.X)), int(math.Round(p.Y))
 
 					cnv.setPixel(pixel_x, pixel_y, object.Lightness(clr, intensity))
 				}
@@ -165,9 +205,10 @@ func (engine ZBufferGraphicsEngine) RenderPolygon(v1, v2, v3 object.Vertex, clr 
 			intensity := i1 + (i2-i1)*phi
 
 			if x >= 0 && y >= 0 && x < float64(engine.Cnv.width()) && y < float64(engine.Cnv.height()) {
-				if engine.zbuf[int(x)][int(y)] < p.Z {
+				if engine.zbuf[int(x)][int(y)] > p.Z {
 					engine.zbuf[int(x)][int(y)] = p.Z
 					pixel_x, pixel_y := projection(cnv.height(), p)
+					// pixel_x, pixel_y := int(math.Round(p.X)), int(math.Round(p.Y))
 					cnv.setPixel(pixel_x, pixel_y, object.Lightness(clr, intensity))
 				}
 			}
@@ -197,8 +238,9 @@ func (engine ZBufferGraphicsEngine) RenderScene(scn object.Scene) {
 	engine.light = scn.LightSource
 
 	cnv := engine.Cnv
-	zBack := float64(-10000)
+	zBack := float64(10000)
 	engine.initBuf(cnv.height(), cnv.width(), zBack)
+	engine.initProjection()
 
 	cnv.fill(scn.Background)
 
