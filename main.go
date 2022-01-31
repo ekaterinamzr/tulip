@@ -2,15 +2,19 @@ package main
 
 import (
 	//"fmt"
-	"fmt"
+	//"fmt"
+
 	"image/color"
 
 	// "image/draw"
 
+	"math"
 	"time"
 	"tulip/flower"
 	"tulip/graphics"
 	"tulip/object"
+
+	//"tulip/primitives"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -26,25 +30,16 @@ func main() {
 	a := app.New()
 	w := a.NewWindow("Tulip")
 
-	mygreen := color.RGBA{0, 100, 0, 255}
-
-	v := []object.Vertex{{0, 0, 0}, {0, 10, 0}, {0, 0, 10}, {10, 0, 0}, {10, 10, 0}, {10, 0, 10}, {0, 10, 10}, {10, 10, 10}}
-	p := []object.Polygon{{2, 6, 5, mygreen}, {6, 7, 5, mygreen}, {5, 7, 3, mygreen}, {7, 4, 3, mygreen}, {4, 3, 0, mygreen}, {4, 1, 0, mygreen}, {1, 2, 0, mygreen}, {1, 6, 0, mygreen}, {1, 6, 7, mygreen}, {1, 4, 7, mygreen}, {0, 2, 5, mygreen}, {0, 3, 5, mygreen}}
-	cube := object.Model{v, p}
-
-	v1 := []object.Vertex{{50, 50, 0}, {100, 100, 0}, {80, 20, 0}}
-	p1 := []object.Polygon{{0, 1, 2, mygreen}}
-	triangle := object.Model{v1, p1}
-	triangle.SortVertices()
-
-	cube.SortVertices()
+	// blue := color.NRGBA{0, 0, 255, 255}
+	// center := object.MakePoint(100, 100, 100)
+	// cube := primitives.NewCube(100, center, blue)
 
 	petal1 := flower.TestPetal()
 	petal2 := flower.TestPetal()
-	petal2.Move(object.Vertex{50, 50, 50})
+	petal2.Move(object.Point{50, 50, 50})
 
-	leaf := flower.TestLeaf()
-	fmt.Println(leaf)
+	//leaf := flower.TestLeaf()
+	//fmt.Println(leaf)
 
 	var comp object.CompositeModel
 	comp.Add(&petal1)
@@ -54,7 +49,8 @@ func main() {
 
 	//petal.SortVertices()
 
-	tulip := flower.NewTulip(object.Vertex{100, 100, 0})
+	tulip1 := flower.NewTulip(object.Point{100, 0, 0}, 1)
+	tulip2 := flower.NewTulip(object.Point{300, 0, 0}, 2)
 	//fmt.Println(tulip.Components)
 
 	//myimage := image.NewRGBA(image.Rect(0, 0, 220, 220)) // x1,y1,  x2,y2
@@ -68,20 +64,20 @@ func main() {
 	var GrEngine graphics.ZBufferGraphicsEngine
 	GrEngine.Cnv = graphics.NewImageCanvas(height, width)
 
-	cube.Scale(object.Vertex{0, 0, 0}, 10)
-	cube.Move(object.Vertex{100, 100, 0})
-	center := object.Vertex{5, 5, 5}
-	center.ScaleVertex(object.Vertex{0, 0, 0}, 10)
-
-	center.MoveVertex(object.Vertex{100, 100, 0})
-
 	var scene object.Scene
-	scene.BackGround = color.NRGBA{255, 255, 255, 255}
-	scene.AddObject(tulip)
+	scene.SetBackground(color.NRGBA{0, 204, 255, 255})
+	scene.SetLight(0.5, object.Point{200, 400, 200})
+	scene.AddObject(tulip1)
+	scene.AddObject(tulip2)
 
 	//red := color.NRGBA{255, 0, 0, 255}
 
 	//scene.Objects[0].RotateObject(center, object.Vertex{30, 30, 30})
+	//fmt.Println(tulip.Components[0])
+
+	w.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
+		scene.Objects[0].Rotate(object.Point{100, 0, 0}, object.Point{0, 10, 0})
+	})
 
 	go func() {
 		//time.Sleep(time.Millisecond * 500)
@@ -95,7 +91,21 @@ func main() {
 			rast := canvas.NewRasterFromImage(GrEngine.Image())
 			w.SetContent(rast)
 
-			scene.Objects[0].Rotate(object.Vertex{100, 300, 100}, object.Vertex{0, 3, 0})
+			//scene.Objects[1].Rotate(object.Point{300, 0, 0}, object.Point{0, 3, 0})
+
+			scene.Objects[0].Animate(math.Abs(object.CalculateIntensityVector(object.Make(0, -1, 0), scene.LightSource)) / 0.6)
+			//scene.Objects[1].Animate(1 - float64(i)/100)
+
+			scene.LightSource.Intensity = -scene.LightSource.Direction.Y * 0.6
+			scene.SetBackground(object.Lightness(color.NRGBA{0, 204, 255, 255}, scene.LightSource.Intensity))
+			scene.LightSource.Direction.Rotate(object.MakePoint(0, 0, 0), object.MakePoint(0, 0, -1))
+			if scene.LightSource.Direction.Y > 0 {
+				scene.LightSource.Direction.Y = 0
+				scene.LightSource.Direction.X = -1
+			}
+
+			//scene.Objects[0].Rotate(center, object.Point{3, 3, 3})
+			//fmt.Println(tulip.Components[0].Vertices)
 		}
 	}()
 

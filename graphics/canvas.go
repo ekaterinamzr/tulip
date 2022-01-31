@@ -1,10 +1,11 @@
 package graphics
 
 import (
-	"bresenham"
 	"image"
 	"image/color"
 	"image/draw"
+
+	"github.com/StephaneBunel/bresenham"
 )
 
 type Canvas interface {

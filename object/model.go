@@ -2,35 +2,72 @@ package object
 
 import (
 	"image/color"
-	"math"
 )
-
-type Vertex struct {
-	X float64
-	Y float64
-	Z float64
-}
-
-type Polygon struct {
-	V1 int
-	V2 int
-	V3 int
-
-	Clr color.Color
-}
 
 type Model struct {
 	Vertices []Vertex
 	Polygons []Polygon
+	//Normals  []Vector3d
+}
+
+type PolygonialFunc func(v1, v2, v3 Vertex, clr color.NRGBA)
+
+type PolygonialModel interface {
+	IterateOverPolygons(f PolygonialFunc)
+
+	Scale(center Point, k float64)
+	Move(delta Point)
+	Rotate(center, angles Point)
+
+	Animate(k float64)
+}
+
+func (m *Model) Animate(k float64) {
+
+}
+
+func (m *Model) CalculateNormals() {
+	for _, p := range m.Polygons {
+		v1, v2, v3 := m.Vertices[p.V1], m.Vertices[p.V2], m.Vertices[p.V3]
+
+		//fmt.Println(v1.Point, v3.Point, v3.Point)
+		normal := PolygonNormal(v1, v2, v3)
+
+		//fmt.Println(normal)
+
+		m.Vertices[p.V1].Normal.Add(normal)
+		m.Vertices[p.V2].Normal.Add(normal)
+		m.Vertices[p.V3].Normal.Add(normal)
+
+		m.Vertices[p.V1].cnt++
+		m.Vertices[p.V2].cnt++
+		m.Vertices[p.V3].cnt++
+	}
+
+	for i := range m.Vertices {
+		m.Vertices[i].Normal.Mul(1.0 / float64(m.Vertices[i].cnt))
+	}
 }
 
 func (m Model) IterateOverPolygons(f PolygonialFunc) {
 
 	for i := 0; i < len(m.Polygons); i++ {
 		v1, v2, v3 := m.Polygons[i].V1, m.Polygons[i].V2, m.Polygons[i].V3
-		//fmt.Println(m.Vertices[v1], m.Vertices[v2], m.Vertices[v3])
 		f(m.Vertices[v1], m.Vertices[v2], m.Vertices[v3], m.Polygons[i].Clr)
 	}
+}
+
+func (m *Model) AddPoint(p Point) {
+	var v Vertex
+	v.X, v.Y, v.Z = p.X, p.Y, p.Z
+	m.Vertices = append(m.Vertices, v)
+}
+
+func (m *Model) AddPolygon(v1, v2, v3 int, clr color.NRGBA) {
+	var p Polygon
+	p.V1, p.V2, p.V3 = v1, v2, v3
+	p.Clr = clr
+	m.Polygons = append(m.Polygons, p)
 }
 
 func (o *Model) SortVertices() {
@@ -50,121 +87,26 @@ func (o *Model) SortVertices() {
 	}
 }
 
-func (a Vertex) Add(b Vertex) Vertex {
-	return Vertex{a.X + b.X, a.Y + b.Y, a.Z + b.Z}
-}
-
-func (a Vertex) Sub(b Vertex) Vertex {
-	return Vertex{a.X - b.X, a.Y - b.Y, a.Z - b.Z}
-}
-
-func (a Vertex) Mul(k float64) Vertex {
-	return Vertex{a.X * k, a.Y * k, a.Z * k}
-}
-
-func (v *Vertex) ScaleVertex(center Vertex, k float64) {
-	v.X = center.X + k*(v.X-center.X)
-	v.Y = center.Y + k*(v.Y-center.Y)
-	v.Z = center.Z + k*(v.Z-center.Z)
-}
-
-func (o *Model) Scale(center Vertex, k float64) {
-	for i := 0; i < len(o.Vertices); i++ {
-		o.Vertices[i].ScaleVertex(center, k)
+func (m *Model) Scale(center Point, k float64) {
+	for i := range m.Vertices {
+		m.Vertices[i].Scale(center, k)
 	}
 }
 
-func (v *Vertex) MoveVertex(delta Vertex) {
-	v.X += delta.X
-	v.Y += delta.Y
-	v.Z += delta.Z
-}
-
-func (o *Model) Move(delta Vertex) {
-	for i := 0; i < len(o.Vertices); i++ {
-		o.Vertices[i].MoveVertex(delta)
+func (m *Model) Move(delta Point) {
+	for i := range m.Vertices {
+		m.Vertices[i].Move(delta)
 	}
 }
 
-func toRadians(angle float64) float64 {
-	return angle * 3.14 / 180
-}
-
-func (v *Vertex) rotateZ(angle float64) {
-	cos := math.Cos(float64(angle))
-	sin := math.Sin(float64(angle))
-
-	newX := cos*v.X + sin*v.Y
-	newY := cos*v.Y - sin*v.X
-
-	v.X = newX
-	v.Y = newY
-}
-
-func (v *Vertex) rotateX(angle float64) {
-	cos := math.Cos(float64(angle))
-	sin := math.Sin(float64(angle))
-
-	newZ := cos*v.Z - sin*v.Y
-	newY := sin*v.Z + cos*v.Y
-
-	v.Z = newZ
-	v.Y = newY
-}
-
-func (v *Vertex) rotateY(angle float64) {
-	cos := math.Cos(float64(angle))
-	sin := math.Sin(float64(angle))
-
-	newX := cos*v.X + sin*v.Z
-	newZ := cos*v.Z - sin*v.X
-
-	v.X = newX
-	v.Z = newZ
-}
-
-func (v *Vertex) RotateVertex(center, angles Vertex) {
-	angleX := toRadians(angles.X)
-	angleY := toRadians(angles.Y)
-	angleZ := toRadians(angles.Z)
-
-	v.MoveVertex(Vertex{-center.X, -center.Y, -center.Z})
-
-	if angleX != 0 {
-		v.rotateX(angleX)
-	}
-
-	if angleY != 0 {
-		v.rotateY(angleY)
-	}
-
-	if angleZ != 0 {
-		v.rotateZ(angleZ)
-	}
-
-	v.MoveVertex(center)
-}
-
-func (o *Model) Rotate(center, angles Vertex) {
-	for i := 0; i < len(o.Vertices); i++ {
-		o.Vertices[i].RotateVertex(center, angles)
-	}
-}
-
-func (v *Vertex) Flip(x, y, z bool) {
-	if x {
-		v.X = -v.X
-	}
-	if y {
-		v.X = -v.X
-	}
-	if z {
-		v.Z = -v.Z
+func (m *Model) Rotate(center, angles Point) {
+	for i := range m.Vertices {
+		m.Vertices[i].Rotate(center, angles)
 	}
 }
 
 func (m *Model) Flip(x, y, z bool) {
-	for i := 0; i < len(m.Vertices); i++ {
+	for i := range m.Vertices {
 		m.Vertices[i].Flip(x, y, z)
 	}
 }
