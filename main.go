@@ -40,6 +40,8 @@ func main() {
 
 	var scene object.Scene
 	scene.SetBackground(color.NRGBA{0, 204, 255, 255})
+	scene.SetGroundClr(color.NRGBA{0, 154, 23, 255})
+	scene.SetGround(mymath.MakeVector3d(100, 0, 100))
 	scene.SetLight(0.5, mymath.Vector3d{200, 400, 200}, mymath.MakeVector3d(-1, 0, 0))
 	scene.AddObject(tulip1)
 	scene.AddObject(tulip2)

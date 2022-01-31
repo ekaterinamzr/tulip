@@ -244,6 +244,8 @@ func (engine ZBufferGraphicsEngine) RenderScene(scn object.Scene) {
 
 	cnv.fill(scn.Background)
 
+	engine.RenderModel(scn.Ground)
+
 	for i := range scn.Objects {
 		engine.RenderModel(scn.Objects[i])
 	}
