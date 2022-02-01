@@ -9,6 +9,8 @@ type Scene struct {
 	Objects     []PolygonialModel
 	LightSource Light
 
+	Camera Camera
+
 	Background color.NRGBA
 	Ground     PolygonialModel
 	GroundClr  color.NRGBA
@@ -21,6 +23,10 @@ func (scn *Scene) AddObject(obj PolygonialModel) {
 func (scn *Scene) SetLight(intensity float64, pos, dir mymath.Vector3d) {
 	light := NewLight(intensity, pos, dir)
 	scn.LightSource = *light
+}
+
+func (scn *Scene) SetCamera(Cam Camera) {
+	scn.Camera = Cam
 }
 
 func (scn *Scene) SetBackground(clr color.NRGBA) {
@@ -53,7 +59,7 @@ func (scn *Scene) SetGround(g mymath.Vector3d) {
 	ground.AddPolygon(0, 1, 2, scn.GroundClr)
 	ground.AddPolygon(2, 3, 0, scn.GroundClr)
 
-	ground.Rotate(mymath.MakeVector3d(0, 0, 0), mymath.MakeVector3d(1, 0, 0))
+	//ground.Rotate(mymath.MakeVector3d(0, 0, 0), mymath.MakeVector3d(1, 0, 0))
 
 	ground.Move(mymath.MakeVector3d(0, 0, 200))
 

@@ -30,8 +30,8 @@ func main() {
 	a := app.New()
 	w := a.NewWindow("Tulip")
 
-	tulip1 := flower.NewTulip(mymath.Vector3d{0, 0, 100}, 1, 2)
-	tulip2 := flower.NewTulip(mymath.Vector3d{100, 0, 200}, 2, 2)
+	tulip1 := flower.NewTulip(mymath.MakeVector3d(0, 0, 150), 1, 2)
+	tulip2 := flower.NewTulip(mymath.MakeVector3d(50, 0, 200), 2, 2)
 
 	var delay time.Duration = 50
 
@@ -42,16 +42,44 @@ func main() {
 	scene.SetBackground(color.NRGBA{0, 204, 255, 255})
 	scene.SetGroundClr(color.NRGBA{0, 154, 23, 255})
 	scene.SetGround(mymath.MakeVector3d(100, 0, 100))
-	scene.SetLight(0.5, mymath.Vector3d{200, 400, 200}, mymath.MakeVector3d(-1, 0, 0))
+	scene.SetLight(0.5, mymath.MakeVector3d(200, 400, 200), mymath.MakeVector3d(-1, 0, 0))
 	scene.AddObject(tulip1)
 	scene.AddObject(tulip2)
 
+	cam := object.MakeCamera()
+	scene.SetCamera(cam)
+
 	w.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
-		scene.Objects[0].Rotate(mymath.Vector3d{0, 0, 100}, mymath.Vector3d{0, 10, 0})
+		if k.Name == "Right" {
+			scene.Camera.VCamera.X += 1
+		}
+		if k.Name == "Left" {
+			scene.Camera.VCamera.X -= 1
+		}
+		if k.Name == "Up" {
+			scene.Camera.VCamera.Y += 1
+		}
+		if k.Name == "Down" {
+			scene.Camera.VCamera.Y -= 1
+		}
+
+		if k.Name == "W" {
+			scene.Camera.VCamera.Add(scene.Camera.VForward)
+		}
+		if k.Name == "S" {
+			scene.Camera.VCamera.Sub(scene.Camera.VForward)
+		}
+		if k.Name == "A" {
+			scene.Camera.FYaw -= 0.1
+		}
+		if k.Name == "D" {
+			scene.Camera.FYaw += 0.1
+		}
+		//scene.Objects[0].Rotate(mymath.MakeVector3d(0, 0, 100}, mymath.MakeVector3d(0, 10, 0})
 	})
 
 	go func() {
-		for i := 0; i < 500; i++ {
+		for i := 0; i < 1000; i++ {
 			time.Sleep(time.Millisecond * delay)
 
 			GrEngine.RenderScene(scene)

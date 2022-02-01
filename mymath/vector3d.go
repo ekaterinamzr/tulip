@@ -8,14 +8,23 @@ type Vector3d struct {
 	X float64
 	Y float64
 	Z float64
+
+	w float64
 }
 
 func MakeVector3d(x, y, z float64) Vector3d {
 	var vec Vector3d
 
 	vec.X, vec.Y, vec.Z = x, y, z
+	vec.w = 1.0
 
 	return vec
+}
+
+func (vec *Vector3d) DivW() {
+	if vec.w != 0 {
+		vec.Div(vec.w)
+	}
 }
 
 func (a Vector3d) DotProduct(b Vector3d) float64 {
@@ -33,17 +42,13 @@ func (a Vector3d) CrossProduct(b Vector3d) Vector3d {
 	return vec
 }
 
-// a, b, c are position Vector3ds
-func MakeNormal(a, b, c Vector3d) Vector3d {
-	vec1 := Vector3dDiff(b, a)
-	vec2 := Vector3dDiff(c, a)
-
-	return vec1.CrossProduct(vec2)
-}
-
 func (vec Vector3d) Length() float64 {
 	length := math.Sqrt(vec.X*vec.X + vec.Y*vec.Y + vec.Z*vec.Z)
 	return length
+}
+
+func (vec *Vector3d) Normalize() {
+	vec.Div(vec.Length())
 }
 
 func CosAlpha(a, b Vector3d) float64 {
@@ -128,7 +133,7 @@ func (vec *Vector3d) Reflect(x, y, z bool) {
 		vec.X = -vec.X
 	}
 	if y {
-		vec.X = -vec.X
+		vec.Y = -vec.Y
 	}
 	if z {
 		vec.Z = -vec.Z

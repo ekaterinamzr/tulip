@@ -30,6 +30,37 @@ type ZBufferGraphicsEngine struct {
 	fFovRad      float64
 
 	mProjection mymath.Matrix4x4
+	mCamera     mymath.Matrix4x4
+	mView       mymath.Matrix4x4
+}
+
+func (engine ZBufferGraphicsEngine) RenderScene(scn object.Scene) {
+	engine.light = scn.LightSource
+
+	cnv := engine.Cnv
+	zBack := float64(10000)
+	engine.initBuf(cnv.height(), cnv.width(), zBack)
+	engine.initProjection()
+
+	vUp := mymath.MakeVector3d(0, 1, 0)
+	t := mymath.MakeVector3d(0, 0, 1)
+	scn.Camera.VLookDir = mymath.MulVectorMatrix(t, mymath.MakeRotationYM(scn.Camera.FYaw))
+	scn.Camera.VTarget = mymath.Vector3dSum(scn.Camera.VCamera, scn.Camera.VLookDir)
+
+	engine.mCamera = mymath.MakePointAtM(scn.Camera.VCamera, scn.Camera.VTarget, vUp)
+	engine.mView = mymath.InverseTranslationM(engine.mCamera)
+
+	cnv.fill(scn.Background)
+
+	engine.RenderModel(scn.Ground)
+
+	for i := range scn.Objects {
+		engine.RenderModel(scn.Objects[i])
+	}
+
+	pixel_x, pixel_y := projection(cnv.height(), scn.LightSource.Pos)
+	cnv.setPixel(pixel_x, pixel_y, color.White)
+
 }
 
 func (engine *ZBufferGraphicsEngine) initProjection() {
@@ -64,9 +95,21 @@ func projection(h int, v mymath.Vector3d) (int, int) {
 func (engine ZBufferGraphicsEngine) RenderPolygon(v1, v2, v3 object.Vertex, clr color.NRGBA) {
 	cnv := engine.Cnv
 
+	v1.Point.MulMatrix(engine.mView)
+	v2.Point.MulMatrix(engine.mView)
+	v3.Point.MulMatrix(engine.mView)
+
 	v1.Point.MulMatrix(engine.mProjection)
 	v2.Point.MulMatrix(engine.mProjection)
 	v3.Point.MulMatrix(engine.mProjection)
+
+	v1.Point.DivW()
+	v2.Point.DivW()
+	v3.Point.DivW()
+
+	// v1.Reflect(true, true, false)
+	// v2.Reflect(true, true, false)
+	// v3.Reflect(true, true, false)
 
 	v1.Point.Add(mymath.MakeVector3d(1.0, 1.0, 0.0))
 	v2.Point.Add(mymath.MakeVector3d(1.0, 1.0, 0.0))
@@ -232,27 +275,6 @@ func (engine ZBufferGraphicsEngine) RenderNormals(v1, v2, v3 object.Vertex, clr 
 
 func (engine ZBufferGraphicsEngine) RenderModel(obj object.PolygonialModel) {
 	obj.IterateOverPolygons(engine.RenderPolygon)
-}
-
-func (engine ZBufferGraphicsEngine) RenderScene(scn object.Scene) {
-	engine.light = scn.LightSource
-
-	cnv := engine.Cnv
-	zBack := float64(10000)
-	engine.initBuf(cnv.height(), cnv.width(), zBack)
-	engine.initProjection()
-
-	cnv.fill(scn.Background)
-
-	engine.RenderModel(scn.Ground)
-
-	for i := range scn.Objects {
-		engine.RenderModel(scn.Objects[i])
-	}
-
-	pixel_x, pixel_y := projection(cnv.height(), scn.LightSource.Pos)
-	cnv.setPixel(pixel_x, pixel_y, color.White)
-
 }
 
 func (engine ZBufferGraphicsEngine) Image() image.Image {

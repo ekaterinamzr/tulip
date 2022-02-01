@@ -14,7 +14,7 @@ func (curve BezierCurve) GetPoint(t float64) Vector3d {
 	y := a*curve[0].Y + b*curve[1].Y + c*curve[2].Y + d*curve[3].Y
 	z := a*curve[0].Z + b*curve[1].Z + c*curve[2].Z + d*curve[3].Z
 
-	return Vector3d{x, y, z}
+	return Vector3d{x, y, z, 1}
 }
 
 func (surface BicubicBezierSurface) GetPoint(u, v float64) Vector3d {
