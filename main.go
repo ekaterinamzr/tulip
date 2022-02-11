@@ -5,7 +5,7 @@ import (
 	// "math"
 	"time"
 	// "tulip/flower"
-	// "tulip/graphics"
+	"tulip/graphics"
 	"tulip/primitives"
 	"tulip/scene"
 
@@ -13,7 +13,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
-	// "fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/canvas"
 )
 
 const (
@@ -34,7 +34,7 @@ func main() {
 	// tulip2 := flower.NewTulip(yellow, mymath.MakeVec3(0.3, -0.5, -0.3), 1, 0.03)
 	//tulip3 := flower.NewTulip(red, mymath.MakeVec3(-20, 0, 220), 1, 2)
 
-	cube := primitives.NewCube(0.5, mymath.MakeVec3(0, 0.25, 0), pink)
+	cube := primitives.NewCube(100, mymath.MakeVec3(100, 100, 0), pink)
 
 	var delay time.Duration = 50
 
@@ -42,8 +42,8 @@ func main() {
 	// GrEngine.Cnv = graphics.NewImageCanvas(height, width)
 
 	//GrEngine := graphics.MakeZBuffEngine(graphics.MakeImageCanvas(height, width))
-	// cnv := graphics.MakeImageCanvas(height, width)
-	// engine := graphics.NewMyGrEngine()
+	cnv := graphics.MakeImageCanvas(height, width)
+	engine := graphics.NewMyGrEngine(cnv)
 
 	var scn scene.Scene
 	scn.SetBackground(color.NRGBA{0, 204, 255, 255})
@@ -123,16 +123,16 @@ func main() {
 	})
 
 	go func() {
-		for i := 0; i < 1000; i++ {
+		for i := 0; i < 1; i++ {
 			time.Sleep(time.Millisecond * delay)
 
 			// engine.RenderScene(&scn, true, true)
 			// rastShadows := canvas.NewRasterFromImage(engine.Image())
 			// ws.SetContent(rastShadows)
 
-			// //engine.RenderScene(&scn, false, false)
-			// rast := canvas.NewRasterFromImage(engine.Image())
-			// w.SetContent(rast)
+			engine.RenderScene(&scn)
+			rast := canvas.NewRasterFromImage(cnv.Image())
+			w.SetContent(rast)
 
 			//scn.Objects[0].Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(3, 3, 3))
 
