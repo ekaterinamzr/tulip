@@ -4,22 +4,6 @@ package mymath
 
 type Matrix4x4 [4][4]float64
 
-func MulVectorMatrix(vec Vec3d, m Matrix4x4) Vec3d {
-	var res Vec3d
-
-	// res.X = vec.X*m[0][0] + vec.Y*m[1][0] + vec.Z*m[2][0] + m[3][0]
-	// res.Y = vec.X*m[0][1] + vec.Y*m[1][1] + vec.Z*m[2][1] + m[3][1]
-	// res.Z = vec.X*m[0][2] + vec.Y*m[1][2] + vec.Z*m[2][2] + m[3][2]
-	// res.w = vec.X*m[0][3] + vec.Y*m[1][3] + vec.Z*m[2][3] + m[3][3]
-
-	res.X = vec.X*m[0][0] + vec.Y*m[0][1] + vec.Z*m[0][2] + m[0][3]
-	res.Y = vec.X*m[1][0] + vec.Y*m[1][1] + vec.Z*m[1][2] + m[1][3]
-	res.Z = vec.X*m[2][0] + vec.Y*m[2][1] + vec.Z*m[2][2] + m[2][3]
-	res.w = vec.X*m[3][0] + vec.Y*m[3][1] + vec.Z*m[3][2] + m[3][3]
-
-	return res
-}
-
 func MakeIdentityM() Matrix4x4 {
 	var m Matrix4x4
 
