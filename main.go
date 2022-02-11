@@ -129,7 +129,7 @@ func main() {
 			// rastShadows := canvas.NewRasterFromImage(engine.Image())
 			// ws.SetContent(rastShadows)
 
-			engine.RenderScene(&scn, false, false)
+			engine.RenderScene(&scn, false, true)
 			rast := canvas.NewRasterFromImage(engine.Image())
 			w.SetContent(rast)
 

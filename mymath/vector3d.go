@@ -27,6 +27,10 @@ func (vec *Vec3d) DivW() {
 	}
 }
 
+func (vec Vec3d) getW() float64 {
+	return vec.w
+}
+
 func (a Vec3d) DotProduct(b Vec3d) float64 {
 	res := a.X*b.X + a.Y*b.Y + a.Z*b.Z
 	return res

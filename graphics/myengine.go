@@ -70,7 +70,6 @@ func makeProjection(eye, center mymath.Vec3d) (mymath.Matrix4x4, bool) {
 
 	proj = mymath.MakeIdentityM()
 	proj[3][2] = -1.0 / dist
-	proj[3][2] = dist
 
 	return proj, true
 }
