@@ -5,12 +5,23 @@ type Vec4 struct {
 	w float64
 }
 
-func MakeVec4(vec3 Vec3, w... float64) Vec4 {
+func MakeVec4(x, y, z float64, w... float64) Vec4 {
+	var vec4 Vec4
+	vec4.Vec3 = MakeVec3(x, y, z)
+
+	if len(w) != 0 {
+		vec4.w = w[0]
+	}
+
+	return vec4
+}
+
+func Vec3ToVec4(vec3 Vec3, w... float64) Vec4 {
 	var vec4 Vec4
 	vec4.Vec3 = vec3
 
 	if len(w) != 0 {
-		vec4.w = 1
+		vec4.w = w[0]
 	}
 
 	return vec4

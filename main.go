@@ -5,7 +5,7 @@ import (
 	// "math"
 	"time"
 	// "tulip/flower"
-	"tulip/graphics"
+	// "tulip/graphics"
 	"tulip/primitives"
 	"tulip/scene"
 
@@ -13,7 +13,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/canvas"
+	// "fyne.io/fyne/v2/canvas"
 )
 
 const (
@@ -30,11 +30,11 @@ func main() {
 	// yellow := color.NRGBA{251, 206, 43, 255}
 	// red := color.NRGBA{226, 34, 46, 255}
 
-	// tulip1 := flower.NewTulip(pink, mymath.MakeVec3d(0, -0.5, 0), 1, 0.03)
-	// tulip2 := flower.NewTulip(yellow, mymath.MakeVec3d(0.3, -0.5, -0.3), 1, 0.03)
-	//tulip3 := flower.NewTulip(red, mymath.MakeVec3d(-20, 0, 220), 1, 2)
+	// tulip1 := flower.NewTulip(pink, mymath.MakeVec3(0, -0.5, 0), 1, 0.03)
+	// tulip2 := flower.NewTulip(yellow, mymath.MakeVec3(0.3, -0.5, -0.3), 1, 0.03)
+	//tulip3 := flower.NewTulip(red, mymath.MakeVec3(-20, 0, 220), 1, 2)
 
-	cube := primitives.NewCube(0.5, mymath.MakeVec3d(0, 0.25, 0), pink)
+	cube := primitives.NewCube(0.5, mymath.MakeVec3(0, 0.25, 0), pink)
 
 	var delay time.Duration = 50
 
@@ -42,14 +42,15 @@ func main() {
 	// GrEngine.Cnv = graphics.NewImageCanvas(height, width)
 
 	//GrEngine := graphics.MakeZBuffEngine(graphics.MakeImageCanvas(height, width))
-	engine := graphics.NewEngine(height, width)
+	// cnv := graphics.MakeImageCanvas(height, width)
+	// engine := graphics.NewMyGrEngine()
 
 	var scn scene.Scene
 	scn.SetBackground(color.NRGBA{0, 204, 255, 255})
 	scn.SetGroundClr(color.NRGBA{0, 154, 23, 255})
-	scn.SetGround(mymath.MakeVec3d(10, 0, 1))
-	scn.SetLight(1, mymath.MakeVec3d(10, 10, 10), mymath.MakeVec3d(-1, -0.3, 0))
-	ground := primitives.NewBlock(2, 0.5, 2, mymath.MakeVec3d(0, -0.25, 0), scn.GroundClr)
+	scn.SetGround(mymath.MakeVec3(10, 0, 1))
+	scn.SetLight(1, mymath.MakeVec3(10, 10, 10), mymath.MakeVec3(-1, -0.3, 0))
+	ground := primitives.NewBlock(2, 0.5, 2, mymath.MakeVec3(0, -0.25, 0), scn.GroundClr)
 	scn.AddObject(ground)
 	// scn.AddObject(tulip1)
 	// scn.AddObject(tulip2)
@@ -57,12 +58,12 @@ func main() {
 	//scn.AddObject(tulip2)
 	//scn.AddObject(tulip3)
 
-	scn.LightSource.Direction = mymath.Vec3dDiff(mymath.MakeVec3d(0, 0, 0), scn.LightSource.Pos)
+	scn.LightSource.Direction = mymath.Vec3Diff(mymath.MakeVec3(0, 0, 0), scn.LightSource.Pos)
 	scn.LightSource.Direction.Normalize()
 
 	//cam := scene.MakeCamera()
 	var cam scene.Camera
-	cam.SetPos(mymath.MakeVec3d(0, 0, 50))
+	cam.SetPos(mymath.MakeVec3(0, 0, 50))
 	scn.SetCamera(cam)
 
 	//scn.Camera.VCamera.Y += 21
@@ -98,12 +99,12 @@ func main() {
 	w.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
 		if k.Name == "Right" {
 			scn.Camera.Pos.X += 1
-			// scn.Camera.Pos.Rotate(mymath.MakeVec3d(0, 0, 0), mymath.MakeVec3d(0, 3, 0))
+			// scn.Camera.Pos.Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, 3, 0))
 			//scn.Camera.Center.X += 1
 		}
 		if k.Name == "Left" {
 			scn.Camera.Pos.X -= 1
-			//scn.Camera.Pos.Rotate(mymath.MakeVec3d(0, 0, 0), mymath.MakeVec3d(0, -3, 0))
+			//scn.Camera.Pos.Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, -3, 0))
 			//scn.Camera.Center.X -= 1
 		}
 		if k.Name == "Up" {
@@ -129,24 +130,24 @@ func main() {
 			// rastShadows := canvas.NewRasterFromImage(engine.Image())
 			// ws.SetContent(rastShadows)
 
-			engine.RenderScene(&scn, false, false)
-			rast := canvas.NewRasterFromImage(engine.Image())
-			w.SetContent(rast)
+			// //engine.RenderScene(&scn, false, false)
+			// rast := canvas.NewRasterFromImage(engine.Image())
+			// w.SetContent(rast)
 
-			//scn.Objects[0].Rotate(mymath.MakeVec3d(0, 0, 0), mymath.MakeVec3d(3, 3, 3))
+			//scn.Objects[0].Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(3, 3, 3))
 
-			// scn.Objects[1].Animate(math.Abs(scene.VectorIntensity(mymath.MakeVec3d(0, -1, 0), scn.LightSource)) / 0.6)
-			//scn.Objects[1].Animate(math.Abs(scn.VectorIntensity(mymath.MakeVec3d(0, -1, 0), scn.LightSource)) / 0.6)
-			// scn.Objects[2].Animate(math.Abs(scene.VectorIntensity(mymath.MakeVec3d(0, -1, 0), scn.LightSource)) / 0.6)
+			// scn.Objects[1].Animate(math.Abs(scene.VectorIntensity(mymath.MakeVec3(0, -1, 0), scn.LightSource)) / 0.6)
+			//scn.Objects[1].Animate(math.Abs(scn.VectorIntensity(mymath.MakeVec3(0, -1, 0), scn.LightSource)) / 0.6)
+			// scn.Objects[2].Animate(math.Abs(scene.VectorIntensity(mymath.MakeVec3(0, -1, 0), scn.LightSource)) / 0.6)
 
 			// scn.LightSource.Intensity = -scn.LightSource.Direction.Y * 0.6
 			// scn.SetBackground(scene.Lightness(color.NRGBA{0, 204, 255, 255}, scn.LightSource.Intensity))
-			// scn.LightSource.Pos.Rotate(mymath.MakeVec3d(0, 0, 0), mymath.MakeVec3d(0, 0, 1))
+			// scn.LightSource.Pos.Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, 0, 1))
 
-			// scn.LightSource.Direction = mymath.Vec3dDiff(mymath.MakeVec3d(0, 0, 0), scn.LightSource.Pos)
+			// scn.LightSource.Direction = mymath.Vec3Diff(mymath.MakeVec3(0, 0, 0), scn.LightSource.Pos)
 			// scn.LightSource.Direction.Normalize()
 
-			// scn.LightSource.Direction.Rotate(mymath.MakeVec3d(0, 0, 0), mymath.MakeVec3d(0, 0, -1))
+			// scn.LightSource.Direction.Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, 0, -1))
 			// if scn.LightSource.Pos.Y < 0 {
 			// 	scn.LightSource.Pos.Y = 0
 			// 	scn.LightSource.Pos.X = -10

@@ -22,19 +22,19 @@ func (c CompositeModel) IterateOverPolygons(f PolygonialFunc) {
 	}
 }
 
-func (c *CompositeModel) Scale(center mymath.Vec3d, k float64) {
+func (c *CompositeModel) Scale(center mymath.Vec3, k float64) {
 	for i := range c.Components {
 		c.Components[i].Scale(center, k)
 	}
 }
 
-func (c *CompositeModel) Move(delta mymath.Vec3d) {
+func (c *CompositeModel) Move(delta mymath.Vec3) {
 	for i := range c.Components {
 		c.Components[i].Move(delta)
 	}
 }
 
-func (c *CompositeModel) Rotate(center, angles mymath.Vec3d) {
+func (c *CompositeModel) Rotate(center, angles mymath.Vec3) {
 	for i := range c.Components {
 		c.Components[i].Rotate(center, angles)
 	}

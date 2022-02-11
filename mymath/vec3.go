@@ -201,3 +201,7 @@ func Vec3Rotate(vec, center, angles Vec3) Vec3 {
 	vec.Rotate(center, angles)
 	return vec
 }
+
+func (vec3 Vec3) ToVec4(w... float64) Vec4 {
+	return Vec3ToVec4(vec3, w...)
+}

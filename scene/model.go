@@ -15,9 +15,9 @@ type PolygonialFunc func(v1, v2, v3 Vertex, clr color.NRGBA)
 type PolygonialModel interface {
 	IterateOverPolygons(f PolygonialFunc)
 
-	Scale(center mymath.Vec3d, k float64)
-	Move(delta mymath.Vec3d)
-	Rotate(center, angles mymath.Vec3d)
+	Scale(center mymath.Vec3, k float64)
+	Move(delta mymath.Vec3)
+	Rotate(center, angles mymath.Vec3)
 
 	Animate(k float64)
 }
@@ -34,7 +34,7 @@ func (m Model) IterateOverPolygons(f PolygonialFunc) {
 	}
 }
 
-func (m *Model) AddPoint(p mymath.Vec3d) {
+func (m *Model) AddPoint(p mymath.Vec4) {
 	var v Vertex
 	v.Point = p
 	m.Vertices = append(m.Vertices, v)
@@ -47,19 +47,19 @@ func (m *Model) AddPolygon(v1, v2, v3 int, clr color.NRGBA) {
 	m.Polygons = append(m.Polygons, p)
 }
 
-func (m *Model) Scale(center mymath.Vec3d, k float64) {
+func (m *Model) Scale(center mymath.Vec3, k float64) {
 	for i := range m.Vertices {
 		m.Vertices[i].Scale(center, k)
 	}
 }
 
-func (m *Model) Move(delta mymath.Vec3d) {
+func (m *Model) Move(delta mymath.Vec3) {
 	for i := range m.Vertices {
 		m.Vertices[i].Move(delta)
 	}
 }
 
-func (m *Model) Rotate(center, angles mymath.Vec3d) {
+func (m *Model) Rotate(center, angles mymath.Vec3) {
 	for i := range m.Vertices {
 		m.Vertices[i].Rotate(center, angles)
 	}
