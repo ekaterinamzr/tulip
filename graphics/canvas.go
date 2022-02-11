@@ -25,8 +25,8 @@ type ImageCanvas struct {
 	Img *image.NRGBA
 }
 
-func NewImageCanvas(h, w int) *ImageCanvas {
-	img := new(ImageCanvas)
+func MakeImageCanvas(h, w int) ImageCanvas {
+	var img ImageCanvas
 	img.Img = image.NewNRGBA(image.Rect(0, 0, w, h))
 	return img
 }

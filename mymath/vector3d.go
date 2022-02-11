@@ -4,7 +4,7 @@ import (
 	"math"
 )
 
-type Vector3d struct {
+type Vec3d struct {
 	X float64
 	Y float64
 	Z float64
@@ -12,8 +12,8 @@ type Vector3d struct {
 	w float64
 }
 
-func MakeVector3d(x, y, z float64) Vector3d {
-	var vec Vector3d
+func MakeVec3d(x, y, z float64) Vec3d {
+	var vec Vec3d
 
 	vec.X, vec.Y, vec.Z = x, y, z
 	vec.w = 1.0
@@ -21,19 +21,19 @@ func MakeVector3d(x, y, z float64) Vector3d {
 	return vec
 }
 
-func (vec *Vector3d) DivW() {
+func (vec *Vec3d) DivW() {
 	if vec.w != 0 {
 		vec.Div(vec.w)
 	}
 }
 
-func (a Vector3d) DotProduct(b Vector3d) float64 {
+func (a Vec3d) DotProduct(b Vec3d) float64 {
 	res := a.X*b.X + a.Y*b.Y + a.Z*b.Z
 	return res
 }
 
-func (a Vector3d) CrossProduct(b Vector3d) Vector3d {
-	var vec Vector3d
+func (a Vec3d) CrossProduct(b Vec3d) Vec3d {
+	var vec Vec3d
 
 	vec.X = (a.Y)*(b.Z) - (a.Z)*(b.Y)
 	vec.Y = (a.Z)*(b.X) - (a.X)*(b.Z)
@@ -42,16 +42,16 @@ func (a Vector3d) CrossProduct(b Vector3d) Vector3d {
 	return vec
 }
 
-func (vec Vector3d) Length() float64 {
+func (vec Vec3d) Length() float64 {
 	length := math.Sqrt(vec.X*vec.X + vec.Y*vec.Y + vec.Z*vec.Z)
 	return length
 }
 
-func (vec *Vector3d) Normalize() {
+func (vec *Vec3d) Normalize() {
 	vec.Div(vec.Length())
 }
 
-func CosAlpha(a, b Vector3d) float64 {
+func CosAlpha(a, b Vec3d) float64 {
 	if a.Length() == 0 || b.Length() == 0 {
 		return 0
 	}
@@ -59,25 +59,25 @@ func CosAlpha(a, b Vector3d) float64 {
 	return a.DotProduct(b) / (a.Length() * b.Length())
 }
 
-func (a *Vector3d) Add(b Vector3d) {
+func (a *Vec3d) Add(b Vec3d) {
 	a.X += b.X
 	a.Y += b.Y
 	a.Z += b.Z
 }
 
-func (a *Vector3d) Sub(b Vector3d) {
+func (a *Vec3d) Sub(b Vec3d) {
 	a.X -= b.X
 	a.Y -= b.Y
 	a.Z -= b.Z
 }
 
-func (a *Vector3d) Mul(k float64) {
+func (a *Vec3d) Mul(k float64) {
 	a.X *= k
 	a.Y *= k
 	a.Z *= k
 }
 
-func (a *Vector3d) Div(k float64) {
+func (a *Vec3d) Div(k float64) {
 	if k != 0 {
 		a.X /= k
 		a.Y /= k
@@ -85,50 +85,50 @@ func (a *Vector3d) Div(k float64) {
 	}
 }
 
-func Vector3dSum(a, b Vector3d) Vector3d {
+func Vec3dSum(a, b Vec3d) Vec3d {
 	a.Add(b)
 	return a
 }
 
-func Vector3dDiff(a, b Vector3d) Vector3d {
+func Vec3dDiff(a, b Vec3d) Vec3d {
 	a.Sub(b)
 	return a
 }
 
-func Vector3dMul(a Vector3d, k float64) Vector3d {
+func Vec3dMul(a Vec3d, k float64) Vec3d {
 	a.Mul(k)
 	return a
 }
 
-func Vector3dDiv(a Vector3d, k float64) Vector3d {
+func Vec3dDiv(a Vec3d, k float64) Vec3d {
 	a.Div(k)
 	return a
 }
 
 //
 
-func (vec *Vector3d) Scale(center Vector3d, k float64) {
+func (vec *Vec3d) Scale(center Vec3d, k float64) {
 	vec.Sub(center)
 	vec.Mul(k)
 	vec.Add(center)
 }
 
-func Vector3dScale(vec, center Vector3d, k float64) Vector3d {
+func Vec3dScale(vec, center Vec3d, k float64) Vec3d {
 	vec.Scale(center, k)
 	return vec
 }
 
-func (vec *Vector3d) Move(delta Vector3d) {
+func (vec *Vec3d) Move(delta Vec3d) {
 	vec.Add(delta)
 }
 
-func Vector3dMove(vec, delta Vector3d) Vector3d {
+func Vec3dMove(vec, delta Vec3d) Vec3d {
 	vec.Move(delta)
 	return vec
 }
 
 // Reflection over (0, 0, 0)
-func (vec *Vector3d) Reflect(x, y, z bool) {
+func (vec *Vec3d) Reflect(x, y, z bool) {
 	if x {
 		vec.X = -vec.X
 	}
@@ -140,7 +140,7 @@ func (vec *Vector3d) Reflect(x, y, z bool) {
 	}
 }
 
-func Vector3dReflect(vec Vector3d, x, y, z bool) Vector3d {
+func Vec3dReflect(vec Vec3d, x, y, z bool) Vec3d {
 	vec.Reflect(x, y, z)
 	return vec
 }
@@ -149,7 +149,7 @@ func toRadians(angle float64) float64 {
 	return angle * 3.14 / 180
 }
 
-func (vec *Vector3d) rotateZ(angle float64) {
+func (vec *Vec3d) rotateZ(angle float64) {
 	cos := math.Cos(float64(angle))
 	sin := math.Sin(float64(angle))
 
@@ -160,7 +160,7 @@ func (vec *Vector3d) rotateZ(angle float64) {
 	vec.Y = newY
 }
 
-func (vec *Vector3d) rotateX(angle float64) {
+func (vec *Vec3d) rotateX(angle float64) {
 	cos := math.Cos(float64(angle))
 	sin := math.Sin(float64(angle))
 
@@ -171,7 +171,7 @@ func (vec *Vector3d) rotateX(angle float64) {
 	vec.Y = newY
 }
 
-func (vec *Vector3d) rotateY(angle float64) {
+func (vec *Vec3d) rotateY(angle float64) {
 	cos := math.Cos(float64(angle))
 	sin := math.Sin(float64(angle))
 
@@ -183,7 +183,7 @@ func (vec *Vector3d) rotateY(angle float64) {
 }
 
 // angles in degrees
-func (vec *Vector3d) Rotate(center, angles Vector3d) {
+func (vec *Vec3d) Rotate(center, angles Vec3d) {
 	angleX := toRadians(angles.X)
 	angleY := toRadians(angles.Y)
 	angleZ := toRadians(angles.Z)
@@ -205,11 +205,11 @@ func (vec *Vector3d) Rotate(center, angles Vector3d) {
 	vec.Add(center)
 }
 
-func Vector3dRotate(vec, center, angles Vector3d) Vector3d {
+func Vec3dRotate(vec, center, angles Vec3d) Vec3d {
 	vec.Rotate(center, angles)
 	return vec
 }
 
-func (vec *Vector3d) MulMatrix(m Matrix4x4) {
+func (vec *Vec3d) MulMatrix(m Matrix4x4) {
 	*vec = MulVectorMatrix(*vec, m)
 }

@@ -1,10 +1,10 @@
 package mymath
 
-type BezierCurve [4]Vector3d
+type BezierCurve [4]Vec3d
 
 type BicubicBezierSurface [4]BezierCurve
 
-func (curve BezierCurve) GetPoint(t float64) Vector3d {
+func (curve BezierCurve) GetPoint(t float64) Vec3d {
 	a := (1 - t) * (1 - t) * (1 - t)
 	b := 3 * (1 - t) * (1 - t) * t
 	c := 3 * (1 - t) * t * t
@@ -14,10 +14,10 @@ func (curve BezierCurve) GetPoint(t float64) Vector3d {
 	y := a*curve[0].Y + b*curve[1].Y + c*curve[2].Y + d*curve[3].Y
 	z := a*curve[0].Z + b*curve[1].Z + c*curve[2].Z + d*curve[3].Z
 
-	return Vector3d{x, y, z, 1}
+	return Vec3d{x, y, z, 1}
 }
 
-func (surface BicubicBezierSurface) GetPoint(u, v float64) Vector3d {
+func (surface BicubicBezierSurface) GetPoint(u, v float64) Vec3d {
 	var curve BezierCurve
 
 	curve[0] = surface[0].GetPoint(u)
@@ -28,10 +28,10 @@ func (surface BicubicBezierSurface) GetPoint(u, v float64) Vector3d {
 	return curve.GetPoint(v)
 }
 
-func (surface BicubicBezierSurface) DUBezier(u, v float64) Vector3d {
+func (surface BicubicBezierSurface) DUBezier(u, v float64) Vec3d {
 	var (
 		curve, vCurve BezierCurve
-		vec           Vector3d
+		vec           Vec3d
 	)
 
 	for i := 0; i < 4; i++ {
@@ -43,28 +43,28 @@ func (surface BicubicBezierSurface) DUBezier(u, v float64) Vector3d {
 		vCurve[i] = curve.GetPoint(v)
 	}
 
-	vec = Vector3dMul(vCurve[0], -3*(1-u)*(1-u))
-	vec.Add(Vector3dMul(vCurve[1], 3*(1-u)*(1-u)-6*u*(1-u)))
-	vec.Add(Vector3dMul(vCurve[2], 6*u*(1-u)-3*u*u))
-	vec.Add(Vector3dMul(vCurve[3], 3*u*u))
+	vec = Vec3dMul(vCurve[0], -3*(1-u)*(1-u))
+	vec.Add(Vec3dMul(vCurve[1], 3*(1-u)*(1-u)-6*u*(1-u)))
+	vec.Add(Vec3dMul(vCurve[2], 6*u*(1-u)-3*u*u))
+	vec.Add(Vec3dMul(vCurve[3], 3*u*u))
 
 	return vec
 }
 
-func (surface BicubicBezierSurface) DVBezier(u, v float64) Vector3d {
+func (surface BicubicBezierSurface) DVBezier(u, v float64) Vec3d {
 	var (
 		uCurve BezierCurve
-		vec    Vector3d
+		vec    Vec3d
 	)
 
 	for i := 0; i < 4; i++ {
 		uCurve[i] = surface[i].GetPoint(u)
 	}
 
-	vec = Vector3dMul(uCurve[0], -3*(1-v)*(1-v))
-	vec.Add(Vector3dMul(uCurve[1], 3*(1-v)*(1-v)-6*v*(1-v)))
-	vec.Add(Vector3dMul(uCurve[2], 6*v*(1-v)-3*v*v))
-	vec.Add(Vector3dMul(uCurve[3], 3*v*v))
+	vec = Vec3dMul(uCurve[0], -3*(1-v)*(1-v))
+	vec.Add(Vec3dMul(uCurve[1], 3*(1-v)*(1-v)-6*v*(1-v)))
+	vec.Add(Vec3dMul(uCurve[2], 6*v*(1-v)-3*v*v))
+	vec.Add(Vec3dMul(uCurve[3], 3*v*v))
 
 	return vec
 }

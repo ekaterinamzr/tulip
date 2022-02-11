@@ -4,11 +4,11 @@ import (
 	"image/color"
 	"math"
 	"tulip/mymath"
-	"tulip/object"
+	"tulip/scene"
 )
 
 type Tulip struct {
-	object.CompositeModel
+	scene.CompositeModel
 
 	Petals [6]int
 	Leaves [2]int
@@ -18,44 +18,139 @@ type Tulip struct {
 
 	stemLen float64
 
-	pos mymath.Vector3d
+	pos mymath.Vec3d
 
 	stage1 mymath.BezierCurve
 	stage2 mymath.BezierCurve
 }
 
-type TulipOld struct {
-	Petals [6]object.Model
-	Leafs  [2]object.Model
-	Stem   object.Model
+func MakeStem(h, r float64, n, k int, clr color.NRGBA) scene.Model {
+	var stem scene.Model
 
-	clr color.NRGBA
+	dy := h / float64(n)
+	df := math.Pi * 2 / float64(k)
 
-	stage1 mymath.BezierCurve
-	stage2 mymath.BezierCurve
-}
+	for i := 0; i < n+1; i++ {
+		y := float64(i) * dy
+		x := r
+		z := 0.0
 
-func TestPetal() object.Model {
-	var curve mymath.BezierCurve
-	curve[0] = mymath.MakeVector3d(0, 0, 0)
-	curve[1] = mymath.MakeVector3d(6, 0, 0)
-	curve[2] = mymath.MakeVector3d(4, 10, 0)
-	curve[3] = mymath.MakeVector3d(0, 10, 0)
+		for f := math.Pi / 2; f < 5*math.Pi/2; f += df {
+			x = math.Sin(f) * r
+			z = math.Cos(f) * r
 
-	for i := range curve {
-		curve[i].Scale(mymath.MakeVector3d(0, 0, 0), 10)
+			p := mymath.MakeVec3d(x, y, z)
+			var vertex scene.Vertex
+			vertex.Point = p
+
+			center := mymath.MakeVec3d(0, y, 0)
+			vertex.Normal = mymath.Vec3dDiff(center, p)
+
+			stem.Vertices = append(stem.Vertices, vertex)
+		}
 	}
 
-	petal := MakePetal(curve, 5, 5, color.NRGBA{255, 0, 0, 255})
+	for i := 0; i < n*k; i++ {
+		p1 := scene.Polygon{i, i/k*k + (i+1)%k, i/k*k + (i+1)%k + k, clr}
+		p2 := scene.Polygon{i, i + k, i/k*k + (i+1)%k + k, clr}
 
-	petal.Move(mymath.MakeVector3d(100, 100, 0))
+		stem.Polygons = append(stem.Polygons, p1)
+		stem.Polygons = append(stem.Polygons, p2)
+	}
 
-	return petal
+	return stem
+
 }
 
-func MakePetal(curve mymath.BezierCurve, m, n int, clr color.NRGBA) object.Model {
+func MakeLeaf(clr color.NRGBA) scene.Model {
 	var (
-		petal   object.Model
+		half1, half2, half3, half4, leaf scene.Model
+	)
+
+	half1.AddPoint(mymath.MakeVec3d(0, 0, 0))
+	half1.AddPoint(mymath.MakeVec3d(5, 10, 0))
+	half1.AddPoint(mymath.MakeVec3d(0, 30, 0))
+
+	half1.Vertices[0].Normal = mymath.MakeVec3d(0, 0, -1)
+	half1.Vertices[1].Normal = mymath.MakeVec3d(0, 0, -1)
+	half1.Vertices[2].Normal = mymath.MakeVec3d(0, 0, -1)
+
+	half1.Polygons = append(half1.Polygons, scene.Polygon{0, 1, 2, clr})
+
+	half2.AddPoint(mymath.MakeVec3d(0, 0, 0))
+	half2.AddPoint(mymath.MakeVec3d(5, 10, 0))
+	half2.AddPoint(mymath.MakeVec3d(0, 30, 0))
+
+	half2.Vertices[0].Normal = mymath.MakeVec3d(0, 0, 1)
+	half2.Vertices[1].Normal = mymath.MakeVec3d(0, 0, 1)
+	half2.Vertices[2].Normal = mymath.MakeVec3d(0, 0, 1)
+
+	half2.Polygons = append(half1.Polygons, scene.Polygon{0, 1, 2, clr})
+
+	half2.Rotate(mymath.MakeVec3d(0, 0, 0), mymath.MakeVec3d(0, 120, 0))
+
+	half1.Vertices[0].Normal.Add(half2.Vertices[0].Normal)
+	half1.Vertices[2].Normal.Add(half2.Vertices[2].Normal)
+
+	half1.Vertices[0].Normal.Mul(0.5)
+	half1.Vertices[2].Normal.Mul(0.5)
+
+	leaf.Vertices = append(leaf.Vertices, half1.Vertices...)
+	leaf.Vertices = append(leaf.Vertices, half2.Vertices[1])
+
+	leaf.Polygons = append(leaf.Polygons, scene.Polygon{0, 1, 2, clr}, scene.Polygon{0, 2, 3, clr})
+
+	half3.AddPoint(mymath.MakeVec3d(0, 0, 0))
+	half3.AddPoint(mymath.MakeVec3d(5, 10, 0))
+	half3.AddPoint(mymath.MakeVec3d(0, 30, 0))
+	half3.AddPoint(mymath.MakeVec3d(0, 10, -2))
+
+	half3.Vertices[0].Normal = mymath.MakeVec3d(0, 0, 1)
+	half3.Vertices[1].Normal = mymath.MakeVec3d(0, 0, 1)
+	half3.Vertices[2].Normal = mymath.MakeVec3d(0, 0, 1)
+	half3.Vertices[3].Normal = mymath.MakeVec3d(0, 0, 1)
+
+	half3.Polygons = append(half3.Polygons, scene.Polygon{0, 1, 3, clr})
+	half3.Polygons = append(half3.Polygons, scene.Polygon{1, 2, 3, clr})
+
+	half4.AddPoint(mymath.MakeVec3d(0, 0, 0))
+	half4.AddPoint(mymath.MakeVec3d(5, 10, 0))
+	half4.AddPoint(mymath.MakeVec3d(0, 30, 0))
+	half4.AddPoint(mymath.MakeVec3d(0, 10, -2))
+
+	half4.Vertices[0].Normal = mymath.MakeVec3d(0, 0, -1)
+	half4.Vertices[1].Normal = mymath.MakeVec3d(0, 0, -1)
+	half4.Vertices[2].Normal = mymath.MakeVec3d(0, 0, -1)
+	half4.Vertices[3].Normal = mymath.MakeVec3d(0, 0, -1)
+
+	half4.Polygons = append(half4.Polygons, scene.Polygon{0, 1, 2, clr})
+	half4.Polygons = append(half4.Polygons, scene.Polygon{1, 2, 3, clr})
+
+	half4.Rotate(mymath.MakeVec3d(0, 0, 0), mymath.MakeVec3d(0, 120, 0))
+
+	half3.Vertices[0].Normal.Add(half4.Vertices[0].Normal)
+	half3.Vertices[2].Normal.Add(half4.Vertices[2].Normal)
+	half3.Vertices[3].Normal.Add(half4.Vertices[3].Normal)
+
+	half3.Vertices[0].Normal.Mul(0.5)
+	half3.Vertices[2].Normal.Mul(0.5)
+	half3.Vertices[3].Normal.Mul(0.5)
+
+	leaf.Vertices = append(leaf.Vertices, half3.Vertices...)
+	leaf.Vertices = append(leaf.Vertices, half4.Vertices[1])
+
+	leaf.Polygons = append(leaf.Polygons, scene.Polygon{4, 5, 7, clr}, scene.Polygon{5, 6, 7, clr}, scene.Polygon{4, 7, 8, clr}, scene.Polygon{7, 2, 8, clr})
+
+	leaf.Rotate(mymath.MakeVec3d(0, 0, 0), mymath.MakeVec3d(0, -60, 0))
+
+	leaf.Rotate(mymath.MakeVec3d(0, 0, 0), mymath.MakeVec3d(0, 0, -30))
+
+	return leaf
+}
+
+func MakePetal(curve mymath.BezierCurve, m, n int, clr color.NRGBA) scene.Model {
+	var (
+		petal   scene.Model
 		surface mymath.BicubicBezierSurface
 	)
 
@@ -64,20 +159,20 @@ func MakePetal(curve mymath.BezierCurve, m, n int, clr color.NRGBA) object.Model
 	surface[2] = curve
 	surface[3] = curve
 
-	surface[1][1].Rotate(mymath.MakeVector3d(0, surface[1][1].Y, 0),
-		mymath.MakeVector3d(0, 20, 0))
-	surface[1][2].Rotate(mymath.MakeVector3d(0, surface[1][2].Y, 0),
-		mymath.MakeVector3d(0, 20, 0))
+	surface[1][1].Rotate(mymath.MakeVec3d(0, surface[1][1].Y, 0),
+		mymath.MakeVec3d(0, 20, 0))
+	surface[1][2].Rotate(mymath.MakeVec3d(0, surface[1][2].Y, 0),
+		mymath.MakeVec3d(0, 20, 0))
 
-	surface[2][1].Rotate(mymath.MakeVector3d(0, surface[2][1].Y, 0),
-		mymath.MakeVector3d(0, 40, 0))
-	surface[2][2].Rotate(mymath.MakeVector3d(0, surface[2][2].Y, 0),
-		mymath.MakeVector3d(0, 40, 0))
+	surface[2][1].Rotate(mymath.MakeVec3d(0, surface[2][1].Y, 0),
+		mymath.MakeVec3d(0, 40, 0))
+	surface[2][2].Rotate(mymath.MakeVec3d(0, surface[2][2].Y, 0),
+		mymath.MakeVec3d(0, 40, 0))
 
-	surface[3][1].Rotate(mymath.MakeVector3d(0, surface[3][1].Y, 0),
-		mymath.MakeVector3d(0, 60, 0))
-	surface[3][2].Rotate(mymath.MakeVector3d(0, surface[3][2].Y, 0),
-		mymath.MakeVector3d(0, 60, 0))
+	surface[3][1].Rotate(mymath.MakeVec3d(0, surface[3][1].Y, 0),
+		mymath.MakeVec3d(0, 60, 0))
+	surface[3][2].Rotate(mymath.MakeVec3d(0, surface[3][2].Y, 0),
+		mymath.MakeVec3d(0, 60, 0))
 
 	for j := 0; j <= n; j++ {
 		v := float64(j) / float64(n)
@@ -85,7 +180,7 @@ func MakePetal(curve mymath.BezierCurve, m, n int, clr color.NRGBA) object.Model
 			u := float64(i) / float64(m)
 			point := surface.GetPoint(float64(i)/float64(m), float64(j)/float64(n))
 
-			var vertex object.Vertex
+			var vertex scene.Vertex
 			vertex.Point = point
 
 			dU := surface.DUBezier(u, v)
@@ -121,204 +216,183 @@ func MakePetal(curve mymath.BezierCurve, m, n int, clr color.NRGBA) object.Model
 		n := len(petal.Vertices)
 
 		petal.Vertices = append(petal.Vertices, v1, v2, v3)
-		petal.Polygons = append(petal.Polygons, object.Polygon{n, n + 1, n + 2, clr})
+		petal.Polygons = append(petal.Polygons, scene.Polygon{n, n + 1, n + 2, clr})
 	}
 
 	return petal
 }
 
-func MakeStem(h, r float64, n, k int, clr color.NRGBA) object.Model {
-	var stem object.Model
+func (t *Tulip) MakePetals(stage mymath.BezierCurve) {
+	for i := range t.Petals {
 
-	dy := h / float64(n)
-	df := math.Pi * 2 / float64(k)
+		petal := MakePetal(stage, 10, 10, t.clr)
 
-	for i := 0; i < n+1; i++ {
-		y := float64(i) * dy
-		x := r
-		z := 0.0
+		t.Add(&petal)
+		t.Petals[i] = t.Size() - 1
+		t.Components[t.Petals[i]].Rotate(mymath.MakeVec3d(0, 0, 0), mymath.MakeVec3d(0, 120*float64(i), 0))
 
-		for f := math.Pi / 2; f < 5*math.Pi/2; f += df {
-			x = math.Sin(f) * r
-			z = math.Cos(f) * r
-
-			p := mymath.MakeVector3d(x, y, z)
-			var vertex object.Vertex
-			vertex.Point = p
-
-			center := mymath.MakeVector3d(0, y, 0)
-			vertex.Normal = mymath.Vector3dDiff(center, p)
-
-			stem.Vertices = append(stem.Vertices, vertex)
+		if i > 2 {
+			t.Components[t.Petals[i]].Rotate(mymath.MakeVec3d(0, 0, 0), mymath.MakeVec3d(0, 60, 0))
 		}
+
+		t.Components[t.Petals[i]].Move(mymath.MakeVec3d(t.pos.X, t.pos.Y+t.stemLen, t.pos.Z))
 	}
-
-	for i := 0; i < n*k; i++ {
-		p1 := object.Polygon{i, i/k*k + (i+1)%k, i/k*k + (i+1)%k + k, clr}
-		p2 := object.Polygon{i, i + k, i/k*k + (i+1)%k + k, clr}
-
-		stem.Polygons = append(stem.Polygons, p1)
-		stem.Polygons = append(stem.Polygons, p2)
-	}
-
-	return stem
 
 }
 
-func MakeLeaf(clr color.NRGBA) object.Model {
-	var (
-		half1, half2, half3, half4, leaf object.Model
-	)
+func NewTulip(clr color.NRGBA, pos mymath.Vec3d, stage int, k float64) *Tulip {
+	t := new(Tulip)
 
-	half1.AddPoint(mymath.MakeVector3d(0, 0, 0))
-	half1.AddPoint(mymath.MakeVector3d(5, 10, 0))
-	half1.AddPoint(mymath.MakeVector3d(0, 30, 0))
+	t.pos = pos
 
-	half1.Vertices[0].Normal = mymath.MakeVector3d(0, 0, -1)
-	half1.Vertices[1].Normal = mymath.MakeVector3d(0, 0, -1)
-	half1.Vertices[2].Normal = mymath.MakeVector3d(0, 0, -1)
+	t.clr = clr
 
-	half1.Polygons = append(half1.Polygons, object.Polygon{0, 1, 2, clr})
+	t.stage1[0] = mymath.MakeVec3d(0, 0, 0)
+	t.stage1[1] = mymath.MakeVec3d(6, 0, 0)
+	t.stage1[2] = mymath.MakeVec3d(4, 10, 0)
+	t.stage1[3] = mymath.MakeVec3d(0, 10, 0)
 
-	half2.AddPoint(mymath.MakeVector3d(0, 0, 0))
-	half2.AddPoint(mymath.MakeVector3d(5, 10, 0))
-	half2.AddPoint(mymath.MakeVector3d(0, 30, 0))
+	t.stage2[0] = mymath.MakeVec3d(0, 0, 0)
+	t.stage2[1] = mymath.MakeVec3d(6, 0, 0)
+	t.stage2[2] = mymath.MakeVec3d(6, 8, 0)
+	t.stage2[3] = mymath.MakeVec3d(5, 10.907, 0)
 
-	half2.Vertices[0].Normal = mymath.MakeVector3d(0, 0, 1)
-	half2.Vertices[1].Normal = mymath.MakeVector3d(0, 0, 1)
-	half2.Vertices[2].Normal = mymath.MakeVector3d(0, 0, 1)
+	for i := range t.stage1 {
+		t.stage1[i].Scale(mymath.MakeVec3d(0, 0, 0), k)
+		t.stage2[i].Scale(mymath.MakeVec3d(0, 0, 0), k)
+	}
 
-	half2.Polygons = append(half1.Polygons, object.Polygon{0, 1, 2, clr})
+	t.stemLen = 30
+	t.stemLen *= k
 
-	half2.Rotate(mymath.MakeVector3d(0, 0, 0), mymath.MakeVector3d(0, 120, 0))
+	if stage == 1 {
+		t.MakePetals(t.stage1)
+	} else {
+		t.MakePetals(t.stage2)
+	}
 
-	half1.Vertices[0].Normal.Add(half2.Vertices[0].Normal)
-	half1.Vertices[2].Normal.Add(half2.Vertices[2].Normal)
+	// Stem
+	stem := MakeStem(t.stemLen, 0.5*k, 20, 20, color.NRGBA{0, 200, 25, 255})
 
-	half1.Vertices[0].Normal.Mul(0.5)
-	half1.Vertices[2].Normal.Mul(0.5)
+	t.Add(&stem)
+	t.Stem = t.Size() - 1
 
-	leaf.Vertices = append(leaf.Vertices, half1.Vertices...)
-	leaf.Vertices = append(leaf.Vertices, half2.Vertices[1])
+	t.Components[t.Stem].Move(mymath.MakeVec3d(pos.X, pos.Y, pos.Z))
 
-	leaf.Polygons = append(leaf.Polygons, object.Polygon{0, 1, 2, clr}, object.Polygon{0, 2, 3, clr})
+	leaf1 := MakeLeaf(color.NRGBA{0, 200, 25, 255})
+	leaf1.Scale(mymath.MakeVec3d(0, 0, 0), k)
 
-	half3.AddPoint(mymath.MakeVector3d(0, 0, 0))
-	half3.AddPoint(mymath.MakeVector3d(5, 10, 0))
-	half3.AddPoint(mymath.MakeVector3d(0, 30, 0))
-	half3.AddPoint(mymath.MakeVector3d(0, 10, -2))
+	t.Add(&leaf1)
+	t.Leaves[0] = t.Size() - 1
 
-	half3.Vertices[0].Normal = mymath.MakeVector3d(0, 0, 1)
-	half3.Vertices[1].Normal = mymath.MakeVector3d(0, 0, 1)
-	half3.Vertices[2].Normal = mymath.MakeVector3d(0, 0, 1)
-	half3.Vertices[3].Normal = mymath.MakeVector3d(0, 0, 1)
+	t.Components[t.Leaves[0]].Move(mymath.MakeVec3d(pos.X, pos.Y, pos.Z))
 
-	half3.Polygons = append(half3.Polygons, object.Polygon{0, 1, 3, clr})
-	half3.Polygons = append(half3.Polygons, object.Polygon{1, 2, 3, clr})
+	leaf2 := MakeLeaf(color.NRGBA{0, 200, 25, 255})
+	leaf2.Scale(mymath.MakeVec3d(0, 0, 0), k)
 
-	half4.AddPoint(mymath.MakeVector3d(0, 0, 0))
-	half4.AddPoint(mymath.MakeVector3d(5, 10, 0))
-	half4.AddPoint(mymath.MakeVector3d(0, 30, 0))
-	half4.AddPoint(mymath.MakeVector3d(0, 10, -2))
+	leaf2.Reflect(true, false, false)
 
-	half4.Vertices[0].Normal = mymath.MakeVector3d(0, 0, -1)
-	half4.Vertices[1].Normal = mymath.MakeVector3d(0, 0, -1)
-	half4.Vertices[2].Normal = mymath.MakeVector3d(0, 0, -1)
-	half4.Vertices[3].Normal = mymath.MakeVector3d(0, 0, -1)
+	t.Add(&leaf2)
+	t.Leaves[1] = t.Size() - 1
 
-	half4.Polygons = append(half4.Polygons, object.Polygon{0, 1, 2, clr})
-	half4.Polygons = append(half4.Polygons, object.Polygon{1, 2, 3, clr})
+	t.Components[t.Leaves[1]].Move(mymath.MakeVec3d(pos.X, pos.Y, pos.Z))
 
-	half4.Rotate(mymath.MakeVector3d(0, 0, 0), mymath.MakeVector3d(0, 120, 0))
-
-	half3.Vertices[0].Normal.Add(half4.Vertices[0].Normal)
-	half3.Vertices[2].Normal.Add(half4.Vertices[2].Normal)
-	half3.Vertices[3].Normal.Add(half4.Vertices[3].Normal)
-
-	half3.Vertices[0].Normal.Mul(0.5)
-	half3.Vertices[2].Normal.Mul(0.5)
-	half3.Vertices[3].Normal.Mul(0.5)
-
-	leaf.Vertices = append(leaf.Vertices, half3.Vertices...)
-	leaf.Vertices = append(leaf.Vertices, half4.Vertices[1])
-
-	leaf.Polygons = append(leaf.Polygons, object.Polygon{4, 5, 7, clr}, object.Polygon{5, 6, 7, clr}, object.Polygon{4, 7, 8, clr}, object.Polygon{7, 2, 8, clr})
-
-	leaf.Rotate(mymath.MakeVector3d(0, 0, 0), mymath.MakeVector3d(0, -60, 0))
-
-	leaf.Rotate(mymath.MakeVector3d(0, 0, 0), mymath.MakeVector3d(0, 0, -30))
-
-	return leaf
+	return t
 }
 
-func (t *Tulip) Rotate(center, angles mymath.Vector3d) {
+func (t *Tulip) Rotate(center, angles mymath.Vec3d) {
 	t.CompositeModel.Rotate(center, angles)
 
 	for i := 0; i < 4; i++ {
-		t.stage1[i].Rotate(mymath.MakeVector3d(0, 0, 0), mymath.MakeVector3d(0, 0, angles.Z))
-		t.stage2[i].Rotate(mymath.MakeVector3d(0, 0, 0), mymath.MakeVector3d(0, 0, angles.Z))
+		t.stage1[i].Rotate(mymath.MakeVec3d(0, 0, 0), mymath.MakeVec3d(0, 0, angles.Z))
+		t.stage2[i].Rotate(mymath.MakeVec3d(0, 0, 0), mymath.MakeVec3d(0, 0, angles.Z))
 	}
 }
 
-func (t *Tulip) Scale(center mymath.Vector3d, k float64) {
+func (t *Tulip) Scale(center mymath.Vec3d, k float64) {
 	t.CompositeModel.Scale(center, k)
 	t.stemLen *= k
 
 	for i := 0; i < 4; i++ {
-		t.stage1[i].Scale(mymath.MakeVector3d(0, 0, 0), k)
-		t.stage2[i].Scale(mymath.MakeVector3d(0, 0, 0), k)
+		t.stage1[i].Scale(mymath.MakeVec3d(0, 0, 0), k)
+		t.stage2[i].Scale(mymath.MakeVec3d(0, 0, 0), k)
 	}
-}
-
-func (t *Tulip) MakePetals(stage mymath.BezierCurve) {
-	for i := range t.Petals {
-
-		petal := MakePetal(stage, 20, 20, t.clr)
-
-		t.Add(&petal)
-		t.Petals[i] = t.Size() - 1
-		t.Components[t.Petals[i]].Rotate(mymath.MakeVector3d(0, 0, 0), mymath.MakeVector3d(0, 120 * float64(i), 0))
-
-		if i > 2 {
-			t.Components[t.Petals[i]].Rotate(mymath.MakeVector3d(0, 0, 0), mymath.MakeVector3d(0, 60, 0))
-		}
-
-		t.Components[t.Petals[i]].Move(mymath.MakeVector3d(t.pos.X, t.pos.Y + t.stemLen, t.pos.Z))
-	}
-
 }
 
 func (t *Tulip) ChangePetals(stage mymath.BezierCurve) {
+
+	var clrs [6]color.NRGBA
+	clrs[0] = color.NRGBA{255, 0, 0, 255}
+	clrs[1] = color.NRGBA{0, 255, 0, 255}
+	clrs[2] = color.NRGBA{0, 0, 255, 255}
+	clrs[3] = color.NRGBA{255, 255, 0, 255}
+	clrs[4] = color.NRGBA{255, 0, 255, 255}
+	clrs[5] = color.NRGBA{0, 255, 255, 255}
+
 	for i := range t.Petals {
 
-		petal := MakePetal(stage, 20, 20, t.clr)
+		petal := MakePetal(stage, 10, 10, t.clr)
 
 		t.Components[t.Petals[i]] = &petal
 
-		t.Components[t.Petals[i]].Rotate(mymath.MakeVector3d(0, 0, 0), mymath.MakeVector3d(0, 120 * float64(i), 0))
-
 		if i > 2 {
-			t.Components[t.Petals[i]].Rotate(mymath.MakeVector3d(0, 0, 0), mymath.MakeVector3d(0, 60, 0))
+			//t.Components[t.Petals[i]].Move(mymath.MakeVec3d(1, 0, 0))
+			t.Components[t.Petals[i]].Rotate(mymath.MakeVec3d(0, 0, 0), mymath.MakeVec3d(0, 60, 0))
 		}
 
-		t.Components[t.Petals[i]].Move(mymath.MakeVector3d(t.pos.X, t.pos.Y + t.stemLen, t.pos.Z))
+		t.Components[t.Petals[i]].Rotate(mymath.MakeVec3d(0, 0, 0), mymath.MakeVec3d(0, 120*float64(i), 0))
+
+		t.Components[t.Petals[i]].Move(mymath.MakeVec3d(t.pos.X, t.pos.Y+t.stemLen, t.pos.Z))
 	}
 
 }
 
-func (t Tulip) interpolateStagePoint(i int, k float64) mymath.Vector3d {
+func (t *Tulip) ChangePetalsNew(stageIn, stageOut mymath.BezierCurve) {
 
-	var p mymath.Vector3d
+	var clrs [6]color.NRGBA
+	clrs[0] = color.NRGBA{255, 0, 0, 255}
+	clrs[1] = color.NRGBA{0, 255, 0, 255}
+	clrs[2] = color.NRGBA{0, 0, 255, 255}
+	clrs[3] = color.NRGBA{255, 255, 0, 255}
+	clrs[4] = color.NRGBA{255, 0, 255, 255}
+	clrs[5] = color.NRGBA{0, 255, 255, 255}
+
+	for i := 0; i < 3; i++ {
+
+		petal := MakePetal(stageOut, 10, 10, t.clr)
+
+		t.Components[t.Petals[i]] = &petal
+		//t.Components[t.Petals[i]].Move(mymath.MakeVec3d(1, 0, 0))
+
+		t.Components[t.Petals[i]].Rotate(mymath.MakeVec3d(0, 0, 0), mymath.MakeVec3d(0, 120*float64(i), 0))
+
+		t.Components[t.Petals[i]].Move(mymath.MakeVec3d(t.pos.X, t.pos.Y+t.stemLen, t.pos.Z))
+	}
+
+	for i := 3; i < 6; i++ {
+
+		petal := MakePetal(stageIn, 10, 10, t.clr)
+
+		t.Components[t.Petals[i]] = &petal
+
+		t.Components[t.Petals[i]].Rotate(mymath.MakeVec3d(0, 0, 0), mymath.MakeVec3d(0, 120*float64(i)+60, 0))
+
+		// t.Components[t.Petals[i]].Rotate(mymath.MakeVec3d(0, 0, 0), mymath.MakeVec3d(0, , 0))
+
+		t.Components[t.Petals[i]].Move(mymath.MakeVec3d(t.pos.X, t.pos.Y+t.stemLen, t.pos.Z))
+	}
+
+}
+
+func (t Tulip) interpolateStagePoint(i int, k float64) mymath.Vec3d {
+
+	var p mymath.Vec3d
 
 	p.X = t.stage1[i].X + (k * (t.stage2[i].X - t.stage1[i].X))
 	p.Y = t.stage1[i].Y + (k * (t.stage2[i].Y - t.stage1[i].Y))
 	p.Z = t.stage1[i].Z + (k * (t.stage2[i].Z - t.stage1[i].Z))
 
 	return p
-}
-
-func (t *Tulip) Animate(k float64) {
-	t.OpenPetals(k)
 }
 
 func (t *Tulip) OpenPetals(k float64) {
@@ -332,72 +406,27 @@ func (t *Tulip) OpenPetals(k float64) {
 	t.ChangePetals(stage)
 }
 
-func NewTulip(pos mymath.Vector3d, stage int, k float64) *Tulip {
-	t := new(Tulip)
+func (t *Tulip) OpenPetalsNew(k float64) {
+	var stageOut, stageIn mymath.BezierCurve
 
-	t.pos = pos
-
-	t.clr = color.NRGBA{222, 0, 33, 255}
-
-	t.stage1[0] = mymath.MakeVector3d(0, 0, 0)
-	t.stage1[1] = mymath.MakeVector3d(6, 0, 0)
-	t.stage1[2] = mymath.MakeVector3d(4, 10, 0)
-	t.stage1[3] = mymath.MakeVector3d(0, 10, 0)
-
-	t.stage2[0] = mymath.MakeVector3d(0, 0, 0)
-	t.stage2[1] = mymath.MakeVector3d(6, 0, 0)
-	t.stage2[2] = mymath.MakeVector3d(6, 8, 0)
-	t.stage2[3] = mymath.MakeVector3d(5, 10.907, 0)
-
-	for i := range t.stage1 {
-		t.stage1[i].Scale(mymath.MakeVector3d(0, 0, 0), k)
-		t.stage2[i].Scale(mymath.MakeVector3d(0, 0, 0), k)
+	kIn := k - 0.15
+	if kIn < 0.0 {
+		kIn = 0.0
 	}
 
-	t.stemLen = 30
-	t.stemLen *= k
+	stageOut[0] = t.interpolateStagePoint(0, k)
+	stageOut[1] = t.interpolateStagePoint(1, k)
+	stageOut[2] = t.interpolateStagePoint(2, k)
+	stageOut[3] = t.interpolateStagePoint(3, k)
 
-	if stage == 1 {
-		t.MakePetals(t.stage1)
-	} else {
-		t.MakePetals(t.stage2)
-	}
+	stageIn[0] = t.interpolateStagePoint(0, kIn)
+	stageIn[1] = t.interpolateStagePoint(1, kIn)
+	stageIn[2] = t.interpolateStagePoint(2, kIn)
+	stageIn[3] = t.interpolateStagePoint(3, kIn)
 
-	// Stem
-	stem := MakeStem(t.stemLen, 0.5*k, 40, 20, color.NRGBA{0, 200, 25, 255})
-
-	t.Add(&stem)
-	t.Stem = t.Size() - 1
-
-	t.Components[t.Stem].Move(mymath.MakeVector3d(pos.X, pos.Y, pos.Z))
-
-	leaf1 := MakeLeaf(color.NRGBA{0, 200, 25, 255})
-	leaf1.Scale(mymath.MakeVector3d(0, 0, 0), k)
-
-	t.Add(&leaf1)
-	t.Leaves[0] = t.Size() - 1
-
-	t.Components[t.Leaves[0]].Move(mymath.MakeVector3d(pos.X, pos.Y, pos.Z))
-
-	leaf2 := MakeLeaf(color.NRGBA{0, 200, 25, 255})
-	leaf2.Scale(mymath.MakeVector3d(0, 0, 0), k)
-
-	leaf2.Reflect(true, false, false)
-
-	t.Add(&leaf2)
-	t.Leaves[1] = t.Size() - 1
-
-	t.Components[t.Leaves[1]].Move(mymath.MakeVector3d(pos.X, pos.Y, pos.Z))
-
-	return t
+	t.ChangePetalsNew(stageIn, stageOut)
 }
 
-func TestLeaf() object.Model {
-
-	leaf := MakeLeaf(color.NRGBA{0, 255, 0, 255})
-
-	leaf.Move(mymath.MakeVector3d(100, 100, 100))
-
-	return leaf
-
+func (t *Tulip) Animate(k float64) {
+	t.OpenPetals(k)
 }
