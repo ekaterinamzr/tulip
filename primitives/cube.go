@@ -43,10 +43,10 @@ func NewCube(side float64, center mymath.Vec3, clr color.NRGBA) *scene.Model {
 	cube.AddPoint(mymath.MakeVec4(side, 0, side))    // 10
 	cube.AddPoint(mymath.MakeVec4(side, side, side)) // 11
 
-	cube.Vertices[8].Normal = mymath.MakeVec4(0.0, 0.0, 1.0)
-	cube.Vertices[9].Normal = mymath.MakeVec4(0.0, 0.0, 1.0)
-	cube.Vertices[10].Normal = mymath.MakeVec4(0.0, 0.0, 1.0)
-	cube.Vertices[11].Normal = mymath.MakeVec4(0.0, 0.0, 1.0)
+	cube.Vertices[8].Normal = mymath.MakeVec4(0.0, 0.0, -1.0)
+	cube.Vertices[9].Normal = mymath.MakeVec4(0.0, 0.0, -1.0)
+	cube.Vertices[10].Normal = mymath.MakeVec4(0.0, 0.0, -1.0)
+	cube.Vertices[11].Normal = mymath.MakeVec4(0.0, 0.0, -1.0)
 
 	cube.AddPolygon(8, 9, 10, clr)
 	cube.AddPolygon(10, 11, 8, clr)
@@ -57,10 +57,10 @@ func NewCube(side float64, center mymath.Vec3, clr color.NRGBA) *scene.Model {
 	cube.AddPoint(mymath.MakeVec4(side, side, 0)) // 14
 	cube.AddPoint(mymath.MakeVec4(side, 0, 0))    // 15
 
-	cube.Vertices[12].Normal = mymath.MakeVec4(0.0, 0.0, -1.0)
-	cube.Vertices[13].Normal = mymath.MakeVec4(0.0, 0.0, -1.0)
-	cube.Vertices[14].Normal = mymath.MakeVec4(0.0, 0.0, -1.0)
-	cube.Vertices[15].Normal = mymath.MakeVec4(0.0, 0.0, -1.0)
+	cube.Vertices[12].Normal = mymath.MakeVec4(0.0, 0.0, 1.0)
+	cube.Vertices[13].Normal = mymath.MakeVec4(0.0, 0.0, 1.0)
+	cube.Vertices[14].Normal = mymath.MakeVec4(0.0, 0.0, 1.0)
+	cube.Vertices[15].Normal = mymath.MakeVec4(0.0, 0.0, 1.0)
 
 	cube.AddPolygon(12, 13, 14, clr)
 	cube.AddPolygon(14, 15, 12, clr)

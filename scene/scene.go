@@ -37,7 +37,6 @@ func (scn *Scene) SetGroundClr(clr color.NRGBA) {
 	scn.GroundClr = clr
 }
 
-
 // func (scn *Scene) SetSquareGround(g float64) {
 // 	ground := primitives.NewBlock(g, g, 1, mymath.MakeVec3(0, -g/2, 0), scn.GroundClr)
 // 	scn.Ground = ground

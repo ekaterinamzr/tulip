@@ -34,7 +34,8 @@ func main() {
 	// tulip2 := flower.NewTulip(yellow, mymath.MakeVec3(0.3, -0.5, -0.3), 1, 0.03)
 	//tulip3 := flower.NewTulip(red, mymath.MakeVec3(-20, 0, 220), 1, 2)
 
-	cube := primitives.NewCube(100, mymath.MakeVec3(100, 100, 0), pink)
+	cube := primitives.NewCube(100, mymath.MakeVec3(100, 100, 100), pink)
+	// cube.Rotate(mymath.MakeVec3(100, 100, 100), mymath.MakeVec3(3, 3, 3))
 
 	var delay time.Duration = 50
 
@@ -49,17 +50,17 @@ func main() {
 	scn.SetBackground(color.NRGBA{0, 204, 255, 255})
 	scn.SetGroundClr(color.NRGBA{0, 154, 23, 255})
 	scn.SetGround(mymath.MakeVec3(10, 0, 1))
-	scn.SetLight(1, mymath.MakeVec3(10, 10, 10), mymath.MakeVec3(-1, -0.3, 0))
-	ground := primitives.NewBlock(2, 0.5, 2, mymath.MakeVec3(0, -0.25, 0), scn.GroundClr)
-	scn.AddObject(ground)
+	scn.SetLight(1, mymath.MakeVec3(100, 100, 0), mymath.MakeVec3(0, -1, 0))
+	// ground := primitives.NewBlock(2, 0.5, 2, mymath.MakeVec3(0, -0.25, 0), scn.GroundClr)
+	// scn.AddObject(ground)
 	// scn.AddObject(tulip1)
 	// scn.AddObject(tulip2)
 	scn.AddObject(cube)
 	//scn.AddObject(tulip2)
 	//scn.AddObject(tulip3)
 
-	scn.LightSource.Direction = mymath.Vec3Diff(mymath.MakeVec3(0, 0, 0), scn.LightSource.Pos)
-	scn.LightSource.Direction.Normalize()
+	// scn.LightSource.Direction = mymath.Vec3Diff(mymath.MakeVec3(0, 0, 0), scn.LightSource.Pos)
+	// scn.LightSource.Direction.Normalize()
 
 	//cam := scene.MakeCamera()
 	var cam scene.Camera
@@ -123,7 +124,7 @@ func main() {
 	})
 
 	go func() {
-		for i := 0; i < 1; i++ {
+		for i := 0; i < 1000; i++ {
 			time.Sleep(time.Millisecond * delay)
 
 			// engine.RenderScene(&scn, true, true)
@@ -134,7 +135,7 @@ func main() {
 			rast := canvas.NewRasterFromImage(cnv.Image())
 			w.SetContent(rast)
 
-			//scn.Objects[0].Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(3, 3, 3))
+			scn.Objects[0].Rotate(mymath.MakeVec3(100, 100, 100), mymath.MakeVec3(3, 3, 3))
 
 			// scn.Objects[1].Animate(math.Abs(scene.VectorIntensity(mymath.MakeVec3(0, -1, 0), scn.LightSource)) / 0.6)
 			//scn.Objects[1].Animate(math.Abs(scn.VectorIntensity(mymath.MakeVec3(0, -1, 0), scn.LightSource)) / 0.6)

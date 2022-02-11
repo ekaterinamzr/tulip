@@ -47,11 +47,6 @@ func (cnv ImageCanvas) fill(c color.Color) {
 	draw.Draw(cnv.Img, cnv.Img.Bounds(), &image.Uniform{c}, image.Point{}, draw.Src)
 }
 
-func (cnv ImageCanvas) size() (int, int) {
-	imageRect := cnv.Img.Bounds()
-	return imageRect.Dx(), imageRect.Dy()
-}
-
 func (cnv ImageCanvas) height() int {
 	return cnv.Img.Rect.Dy()
 }
