@@ -13,6 +13,7 @@ type Model struct {
 type PolygonialFunc func(v1, v2, v3 Vertex, clr color.NRGBA)
 
 type PolygonialModel interface {
+	GetVertices() ([]Vertex, []int)
 	IterateOverPolygons(f PolygonialFunc)
 
 	Scale(center mymath.Vec3, k float64)
@@ -24,6 +25,30 @@ type PolygonialModel interface {
 
 func (m *Model) Animate(k float64) {
 
+}
+
+func (m Model) GetVertices() ([]Vertex, []int){
+	for i := range(m.Polygons) {
+		vIdx0, vIdx1, vIdx2 := m.Polygons[i].V1, m.Polygons[i].V2, m.Polygons[i].V3
+		clr := m.Polygons[i].Clr
+		// v0, v1, v2 := m.Vertices[vIdx0], m.Vertices[vIdx1], m.Vertices[vIdx2]
+		m.Vertices[vIdx0].Clr = clr
+		m.Vertices[vIdx1].Clr = clr
+		m.Vertices[vIdx2].Clr = clr
+	}
+
+	vertices := make([]Vertex, len(m.Vertices))
+	indices := make([]int, len(m.Polygons) * 3)
+
+	copy(vertices, m.Vertices)
+
+	for _, p := range(m.Polygons) {
+		indices = append(indices, p.V1)
+		indices = append(indices, p.V2)
+		indices = append(indices, p.V3)
+	}
+
+	return vertices, indices
 }
 
 func (m Model) IterateOverPolygons(f PolygonialFunc) {

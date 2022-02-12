@@ -16,6 +16,10 @@ func (c CompositeModel) Size() int {
 	return len(c.Components)
 }
 
+func (c CompositeModel) IsComposit() bool{
+	return true
+}
+
 func (c CompositeModel) IterateOverPolygons(f PolygonialFunc) {
 	for i := range c.Components {
 		c.Components[i].IterateOverPolygons(f)

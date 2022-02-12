@@ -6,8 +6,27 @@ import (
 	"tulip/scene"
 )
 
+type Vertex struct {
+	Point      mymath.Vec4
+	Normal     mymath.Vec4
+	worldPoint mymath.Vec4
+	Intensity  float64
+	clr        color.NRGBA
+}
+
 type gouraudShader struct {
 	light scene.Light
+
+	projection mymath.Matrix4x4
+	view       mymath.Matrix4x4
+	viewProj   mymath.Matrix4x4
+}
+
+func (g *gouraudShader) makeShader(view, proj mymath.Matrix4x4, light scene.Light) {
+	g.projection = proj
+	g.view = view
+	g.viewProj = mymath.MulMatrices(proj, view)
+	g.light = light
 }
 
 func intensity(n mymath.Vec3, l scene.Light) float64 {
@@ -25,8 +44,18 @@ func intensity(n mymath.Vec3, l scene.Light) float64 {
 }
 
 // Vertex shader
-func (g gouraudShader) vs(v *scene.Vertex) {
-	v.Intensity = intensity(v.Normal.Vec3, g.light)
+func (g gouraudShader) vs(v scene.Vertex) Vertex {
+	var vS Vertex
+	vS.Point = mymath.MulVecMat(v.Point, g.viewProj)
+
+	// vS.Point.DivW()
+	vS.Normal = v.Normal
+	// vS.Normal = mymath.MulVecMat(v.Normal, g.projection)
+	vS.clr = v.Clr
+	vS.worldPoint = v.Point
+	vS.Intensity = intensity(v.Normal.Vec3, g.light)
+
+	return vS
 }
 
 func lightness(clr color.NRGBA, intensity float64) color.NRGBA {
@@ -43,7 +72,8 @@ func lightness(clr color.NRGBA, intensity float64) color.NRGBA {
 
 // Pixel shader
 
-func (g gouraudShader) ps(v scene.Vertex, clr color.NRGBA) (int, int, color.NRGBA) {
+func (g gouraudShader) ps(v Vertex, clr color.NRGBA) (int, int, color.NRGBA) {
+	// i := intensity(v.Normal.Vec3, g.light)
 	pixelX := int(v.Point.X)
 	pixelY := int(v.Point.Y)
 	pixelClr := lightness(clr, v.Intensity)

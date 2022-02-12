@@ -9,7 +9,9 @@ type Vertex struct {
 	Point  mymath.Vec4
 	Normal mymath.Vec4
 
-	Intensity float64
+	Clr color.NRGBA
+
+	// Intensity float64
 }
 
 type Polygon struct {
