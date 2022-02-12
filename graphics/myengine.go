@@ -45,8 +45,20 @@ func (engine *MyGrEngine) initZBuf() {
 // Rendering scene
 func (engine MyGrEngine) RenderScene(scn *scene.Scene) {
 	// proj := makeProjection(2.0, 2.0, 1.0, 10.0)
-	proj := makeFovProjection(scn.Camera.Hfov, scn.Camera.Aspect_ratio, 1.0, 100.0)
-	view := makeTranslation(-scn.Camera.Pos.X, -scn.Camera.Pos.Y, -scn.Camera.Pos.Z)
+	proj := makeFovProjection(90.0, float64(engine.cnv.height()) / float64(engine.cnv.width()), 1.0, 100.0)
+	
+	vUp := mymath.MakeVec3(0, 1, 0)
+	t := mymath.MakeVec4(0, 0, 1, 0)
+	scn.Camera.VLookDir = mymath.MulVecMat(t, mymath.MakeRotationYM(scn.Camera.FYaw))
+	scn.Camera.VTarget = mymath.Vec3Sum(scn.Camera.VCamera, scn.Camera.VLookDir.Vec3)
+	// scn.Camera.VTarget = mymath.MakeVec3(0, 0, 10)
+	
+	scn.Camera.VForward = mymath.Vec3Mul(scn.Camera.VLookDir.Vec3, 1.0)
+
+	mCamera := mymath.MakePointAtM(scn.Camera.VCamera, scn.Camera.VTarget, vUp)
+	view := mymath.InverseTranslationM(mCamera)
+	// proj := makeFovProjection(90.0, 1.0, 1.0, 100.0)
+	//view := makeTranslation(-scn.Camera.Pos.X, -scn.Camera.Pos.Y, -scn.Camera.Pos.Z)
 	// setting up the engine
 	// setting shader
 	engine.shader.makeShader(proj, view, scn.LightSource)
@@ -114,8 +126,8 @@ func makeFovProjection(fov, ar, n, f float64) mymath.Matrix4x4 {
 	w := 1.0 / math.Tan(fovRad/2.0)
 	h := w * ar
 
-	proj[0][0] = w
-	proj[1][1] = h
+	proj[0][0] = h
+	proj[1][1] = w
 	proj[2][2] = f / (f - n)
 	proj[3][2] = -n * f / (f - n)
 	proj[2][3] = 1.0

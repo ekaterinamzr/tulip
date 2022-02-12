@@ -62,64 +62,62 @@ func main() {
 	// scn.LightSource.Direction = mymath.Vec3Diff(mymath.MakeVec3(0, 0, 0), scn.LightSource.Pos)
 	// scn.LightSource.Direction.Normalize()
 
-	cam := scene.MakeCamera(mymath.MakeVec3(0, 0, -10), 1.0, 90.0, 1.0)
+	cam := scene.MakeCamera(mymath.MakeVec3(0, 0, 0))
 	scn.SetCamera(cam)
-
-	//scn.Camera.VCamera.Y += 21
-
-	// w.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
-	// 	if k.Name == "Right" {
-	// 		scn.Camera.VCamera.X += 1
-	// 	}
-	// 	if k.Name == "Left" {
-	// 		scn.Camera.VCamera.X -= 1
-	// 	}
-	// 	if k.Name == "Up" {
-	// 		scn.Camera.VCamera.Y += 1
-	// 	}
-	// 	if k.Name == "Down" {
-	// 		scn.Camera.VCamera.Y -= 1
-	// 	}
-
-	// 	if k.Name == "W" {
-	// 		scn.Camera.VCamera.Add(scn.Camera.VForward)
-	// 	}
-	// 	if k.Name == "S" {
-	// 		scn.Camera.VCamera.Sub(scn.Camera.VForward)
-	// 	}
-	// 	if k.Name == "A" {
-	// 		scn.Camera.FYaw += 0.1
-	// 	}
-	// 	if k.Name == "D" {
-	// 		scn.Camera.FYaw -= 0.1
-	// 	}
-	// })
 
 	w.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
 		if k.Name == "Right" {
-			scn.Camera.Pos.X += 0.1 * scn.Camera.Speed
-			// scn.Camera.Pos.Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, 3, 0))
-			//scn.Camera.Center.X += 1
+			scn.Camera.VCamera.X += 1
 		}
 		if k.Name == "Left" {
-			scn.Camera.Pos.X -= 0.1 * scn.Camera.Speed
-			//scn.Camera.Pos.Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, -3, 0))
-			//scn.Camera.Center.X -= 1
+			scn.Camera.VCamera.X -= 1
 		}
 		if k.Name == "Up" {
-			scn.Camera.Pos.Y += 0.1
+			scn.Camera.VCamera.Y += 1
 		}
 		if k.Name == "Down" {
-			scn.Camera.Pos.Y -= 0.1
+			scn.Camera.VCamera.Y -= 1
 		}
 
 		if k.Name == "W" {
-			scn.Camera.Pos.Z += 0.1
+			scn.Camera.VCamera.Add(scn.Camera.VForward)
 		}
 		if k.Name == "S" {
-			scn.Camera.Pos.Z -= 0.1
+			scn.Camera.VCamera.Sub(scn.Camera.VForward)
+		}
+		if k.Name == "A" {
+			scn.Camera.FYaw += 0.1
+		}
+		if k.Name == "D" {
+			scn.Camera.FYaw -= 0.1
 		}
 	})
+
+	// w.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
+	// 	if k.Name == "Right" {
+	// 		scn.Camera.Pos.X += 0.1
+	// 		// scn.Camera.Pos.Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, 3, 0))
+	// 		//scn.Camera.Center.X += 1
+	// 	}
+	// 	if k.Name == "Left" {
+	// 		scn.Camera.Pos.X -= 0.1
+	// 		//scn.Camera.Pos.Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, -3, 0))
+	// 		//scn.Camera.Center.X -= 1
+	// 	}
+	// 	if k.Name == "Up" {
+	// 		scn.Camera.Pos.Y += 0.1
+	// 	}
+	// 	if k.Name == "Down" {
+	// 		scn.Camera.Pos.Y -= 0.1
+	// 	}
+
+	// 	if k.Name == "W" {
+	// 		scn.Camera.Pos.Z += 0.1
+	// 	}
+	// 	if k.Name == "S" {
+	// 		scn.Camera.Pos.Z -= 0.1
+	// 	}
+	// })
 
 	go func() {
 		for i := 0; i < 1000; i++ {
