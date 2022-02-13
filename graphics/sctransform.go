@@ -1,12 +1,10 @@
 package graphics
 
-import (
-	// "tulip/mymath"
-)
 type psTransformer struct {
 	xFactor, yFactor float64
 }
 
+// Perspective screen transformation
 func makePST(w, h int) psTransformer {
 	var pst psTransformer
 	pst.xFactor = float64(w) / 2

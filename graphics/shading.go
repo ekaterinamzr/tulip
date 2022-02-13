@@ -47,8 +47,6 @@ func intensity(n mymath.Vec3, l scene.Light) float64 {
 func (g gouraudShader) vs(v scene.Vertex) Vertex {
 	var vS Vertex
 	vS.Point = mymath.MulVecMat(v.Point, g.viewProj)
-
-	// vS.Point.DivW()
 	vS.Normal = v.Normal
 	// vS.Normal = mymath.MulVecMat(v.Normal, g.projection)
 	vS.clr = v.Clr
@@ -71,9 +69,7 @@ func lightness(clr color.NRGBA, intensity float64) color.NRGBA {
 }
 
 // Pixel shader
-
 func (g gouraudShader) ps(v Vertex, clr color.NRGBA) (int, int, color.NRGBA) {
-	// i := intensity(v.Normal.Vec3, g.light)
 	pixelX := int(v.Point.X)
 	pixelY := int(v.Point.Y)
 	pixelClr := lightness(clr, v.Intensity)

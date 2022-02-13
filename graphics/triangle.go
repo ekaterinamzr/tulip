@@ -1,12 +1,7 @@
 package graphics
 
-import (
-	"image/color"
-)
-
 type triangle struct {
 	v0, v1, v2 Vertex
-	clr color.NRGBA
 }
 
 func makeTriangle(v0, v1, v2 Vertex) triangle{

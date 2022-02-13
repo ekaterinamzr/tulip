@@ -111,19 +111,32 @@ func (m Matrix4x4) Inverse() (Matrix4x4, bool) {
 	return res, true
 }
 
-// func MakeTranslationM(x, y, z float64) Matrix4x4 {
-// 	var m Matrix4x4
 
-// 	m[0][0] = 1.0
-// 	m[1][1] = 1.0
-// 	m[2][2] = 1.0
-// 	m[3][3] = 1.0
-// 	m[3][0] = x
-// 	m[3][1] = y
-// 	m[3][2] = z
+func MakeFovProjectionM(fov, ar, n, f float64) Matrix4x4 {
+	var proj Matrix4x4
 
-// 	return m
-// }
+	fovRad := fov * math.Pi / 180.0
+	w := 1.0 / math.Tan(fovRad/2.0)
+	h := w * ar
+
+	proj[0][0] = h
+	proj[1][1] = w
+	proj[2][2] = f / (f - n)
+	proj[3][2] = -n * f / (f - n)
+	proj[2][3] = 1.0
+
+	return proj
+}
+
+func MakeTranslationM(x, y, z float64) Matrix4x4 {
+	tr := MakeIdentityM()
+	tr[3][0] = x
+	tr[3][1] = y
+	tr[3][2] = z
+
+	return tr
+}
+
 
 func MakePointAtM(pos, target, up Vec3) Matrix4x4 {
 	newForward := Vec3Diff(target, pos)
