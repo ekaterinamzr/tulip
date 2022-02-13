@@ -52,3 +52,53 @@ func MulVecMat(vec Vec4, m Matrix4x4) Vec4 {
 
 	return res
 }
+
+func (a *Vec4) Add(b Vec4) {
+	a.X += b.X
+	a.Y += b.Y
+	a.Z += b.Z
+	a.W += b.W
+}
+
+func (a *Vec4) Sub(b Vec4) {
+	a.X -= b.X
+	a.Y -= b.Y
+	a.Z -= b.Z
+	a.W -= b.W
+}
+
+func (a *Vec4) Mul(k float64) {
+	a.X *= k
+	a.Y *= k
+	a.Z *= k
+	a.W *= k
+}
+
+func (a *Vec4) Div(k float64) {
+	if k != 0 {
+		a.X /= k
+		a.Y /= k
+		a.Z /= k
+		a.W /= k
+	}
+}
+
+func Vec4Sum(a, b Vec4) Vec4 {
+	a.Add(b)
+	return a
+}
+
+func Vec4Diff(a, b Vec4) Vec4 {
+	a.Sub(b)
+	return a
+}
+
+func Vec4Mul(a Vec4, k float64) Vec4 {
+	a.Mul(k)
+	return a
+}
+
+func Vec4Div(a Vec4, k float64) Vec4 {
+	a.Div(k)
+	return a
+}

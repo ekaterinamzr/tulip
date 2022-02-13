@@ -4,9 +4,8 @@ import (
 	"image/color"
 	// "math"
 	"time"
-	// "tulip/flower"
+	"tulip/flower"
 	"tulip/graphics"
-	"tulip/primitives"
 	"tulip/scene"
 
 	"tulip/mymath"
@@ -30,11 +29,11 @@ func main() {
 	// yellow := color.NRGBA{251, 206, 43, 255}
 	// red := color.NRGBA{226, 34, 46, 255}
 
-	// tulip1 := flower.NewTulip(pink, mymath.MakeVec3(0, -0.5, 0), 1, 0.03)
+	tulip1 := flower.NewTulip(pink, mymath.MakeVec3(0, 0, 0), 1, 0.2)
 	// tulip2 := flower.NewTulip(yellow, mymath.MakeVec3(0.3, -0.5, -0.3), 1, 0.03)
 	//tulip3 := flower.NewTulip(red, mymath.MakeVec3(-20, 0, 220), 1, 2)
 
-	cube := primitives.NewCube(5, mymath.MakeVec3(0, 0, 10), pink)
+	// cube := primitives.NewCube(5, mymath.MakeVec3(0, 0, 0), pink)
 	// cube.Rotate(mymath.MakeVec3(100, 100, 100), mymath.MakeVec3(3, 3, 3))
 
 	var delay time.Duration = 50
@@ -50,20 +49,47 @@ func main() {
 	scn.SetBackground(color.NRGBA{0, 204, 255, 255})
 	scn.SetGroundClr(color.NRGBA{0, 154, 23, 255})
 	scn.SetGround(mymath.MakeVec3(10, 0, 1))
-	scn.SetLight(1, mymath.MakeVec3(100, 100, 0), mymath.MakeVec3(0, -1, 0))
-	// ground := primitives.NewBlock(2, 0.5, 2, mymath.MakeVec3(0, -0.25, 0), scn.GroundClr)
+	scn.SetLight(1, mymath.MakeVec3(10, 10, -10), mymath.MakeVec3(0, 0, 1))
+	scn.LightSource.Direction = mymath.Vec3Diff(mymath.MakeVec3(0, 0, 0), scn.LightSource.Pos)
+	scn.LightSource.Direction.Normalize()
+
+	// ground := primitives.NewBlock(10, 1, 10, mymath.MakeVec3(0, -3, 0), scn.GroundClr)
 	// scn.AddObject(ground)
-	// scn.AddObject(tulip1)
+	scn.AddObject(tulip1)
 	// scn.AddObject(tulip2)
-	scn.AddObject(cube)
+	// scn.AddObject(cube)
 	//scn.AddObject(tulip2)
 	//scn.AddObject(tulip3)
 
 	// scn.LightSource.Direction = mymath.Vec3Diff(mymath.MakeVec3(0, 0, 0), scn.LightSource.Pos)
 	// scn.LightSource.Direction.Normalize()
 
-	cam := scene.MakeCamera(mymath.MakeVec3(0, 0, 0))
+	cam := scene.MakeCamera(mymath.MakeVec3(0, 0, -10))
 	scn.SetCamera(cam)
+
+	w.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
+		if k.Name == "H" {
+			scn.LightSource.Pos.X += 1
+			scn.LightSource.Direction = mymath.Vec3Diff(mymath.MakeVec3(0, 0, 0), scn.LightSource.Pos)
+			scn.LightSource.Direction.Normalize()
+		}
+		if k.Name == "F" {
+			scn.LightSource.Pos.X -= 1
+		}
+		if k.Name == "I" {
+			scn.LightSource.Pos.Y += 1
+		}
+		if k.Name == "K" {
+			scn.LightSource.Pos.Y -= 1
+		}
+
+		if k.Name == "T" {
+			scn.LightSource.Pos.Add(scn.Camera.VForward)
+		}
+		if k.Name == "G" {
+			scn.LightSource.Pos.Sub(scn.Camera.VForward)
+		}
+	})
 
 	w.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
 		if k.Name == "Right" {

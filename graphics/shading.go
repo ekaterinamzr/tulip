@@ -2,9 +2,15 @@ package graphics
 
 import (
 	"image/color"
+	"math"
 	"tulip/mymath"
 	"tulip/scene"
 )
+
+type shaderInterface interface {
+	vs(v scene.Vertex) Vertex
+	ps(v Vertex, clr color.NRGBA) (int, int, color.NRGBA)
+}
 
 type Vertex struct {
 	Point      mymath.Vec4
@@ -17,16 +23,27 @@ type Vertex struct {
 type gouraudShader struct {
 	light scene.Light
 
-	projection mymath.Matrix4x4
-	view       mymath.Matrix4x4
-	viewProj   mymath.Matrix4x4
+	projection    mymath.Matrix4x4
+	view          mymath.Matrix4x4
+	viewProj      mymath.Matrix4x4
+	lightViewProj mymath.Matrix4x4
+	pst           psTransformer
+
+	sBuf [][]float64
 }
 
-func (g *gouraudShader) makeShader(view, proj mymath.Matrix4x4, light scene.Light) {
+func makeGouraudShader(view, proj, lViewProj mymath.Matrix4x4, sBuf [][]float64, light scene.Light, pst psTransformer) gouraudShader {
+	var g gouraudShader
+
 	g.projection = proj
 	g.view = view
-	g.viewProj = mymath.MulMatrices(proj, view)
+	g.viewProj = mymath.MulMatrices(g.view, g.projection)
 	g.light = light
+	g.lightViewProj = lViewProj
+	g.sBuf = sBuf
+	g.pst = pst
+
+	return g
 }
 
 func intensity(n mymath.Vec3, l scene.Light) float64 {
@@ -70,9 +87,26 @@ func lightness(clr color.NRGBA, intensity float64) color.NRGBA {
 
 // Pixel shader
 func (g gouraudShader) ps(v Vertex, clr color.NRGBA) (int, int, color.NRGBA) {
-	pixelX := int(v.Point.X)
-	pixelY := int(v.Point.Y)
+	px := int(math.Round(v.Point.X))
+	py := int(math.Round(v.Point.Y))
+
+	lightPoint := mymath.MulVecMat(v.worldPoint, g.lightViewProj)
+	g.pst.transformVec4(&lightPoint)
+	//idx := int((math.Round)(lightPoint.X)) + int((math.Round)(lightPoint.Y))*500
+	// lpx := int(math.Round(lightPoint.X))
+	// lpy := int(math.Round(lightPoint.Y))
+
 	pixelClr := lightness(clr, v.Intensity)
 
-	return pixelX, pixelY, pixelClr
+	// if idx < len(g.sBuf) && idx >= 0 && lightPoint.Z > g.sBuf[idx]+0.0006 {
+	// 	fmt.Println(lightPoint.Z, g.sBuf[idx])
+	// 	pixelClr = color.NRGBA{0, 0, 0, 255}
+	// }
+
+	// if lpx >= 0 && lpy >= 0 && lpx < 500.0 && lpy < 500.0 && lightPoint.Z > g.sBuf[lpx][lpy] {
+	// 	// fmt.Println(lightPoint.Z, g.sBuf[lpx][lpy])
+	// 	pixelClr = color.NRGBA{0, 0, 0, 255}
+	// }
+
+	return px, py, pixelClr
 }

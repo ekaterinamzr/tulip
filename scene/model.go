@@ -8,6 +8,7 @@ import (
 type Model struct {
 	Vertices []Vertex
 	Polygons []Polygon
+	Indices []int
 }
 
 type PolygonialFunc func(v1, v2, v3 Vertex, clr color.NRGBA)
@@ -27,7 +28,11 @@ func (m *Model) Animate(k float64) {
 
 }
 
-func (m Model) GetVertices() ([]Vertex, []int){
+func (m Model) GetVertices() ([]Vertex, []int){ 
+	return m.Vertices, m.Indices
+}
+
+func (m Model) GetVerticesOld() ([]Vertex, []int){
 	for i := range(m.Polygons) {
 		vIdx0, vIdx1, vIdx2 := m.Polygons[i].V1, m.Polygons[i].V2, m.Polygons[i].V3
 		clr := m.Polygons[i].Clr
@@ -70,6 +75,11 @@ func (m *Model) AddPolygon(v1, v2, v3 int, clr color.NRGBA) {
 	p.V1, p.V2, p.V3 = v1, v2, v3
 	p.Clr = clr
 	m.Polygons = append(m.Polygons, p)
+
+	m.Vertices[v1].Clr = clr
+	m.Vertices[v2].Clr = clr
+	m.Vertices[v3].Clr = clr
+	m.Indices = append(m.Indices, v1, v2, v3)
 }
 
 func (m *Model) Scale(center mymath.Vec3, k float64) {

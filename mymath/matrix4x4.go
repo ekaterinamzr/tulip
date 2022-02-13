@@ -106,8 +106,6 @@ func (m Matrix4x4) Inverse() (Matrix4x4, bool) {
 
 	res = adjugate.MulNumber(1.0 / det)
 
-	// fmt.Println(MulMatrices(m, res))
-
 	return res, true
 }
 

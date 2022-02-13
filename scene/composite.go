@@ -20,6 +20,25 @@ func (c CompositeModel) IsComposit() bool{
 	return true
 }
 
+
+func (c CompositeModel) GetVertices() ([]Vertex, []int){
+	allVertices := make([]Vertex, 0, 1000)
+	allIndices := make([]int, 0, 1000 * 3)
+	
+	for i := range(c.Components) {
+		vertices, indices := c.Components[i].GetVertices()
+
+		verticesLen := len(vertices)
+		allVertices = append(allVertices, vertices...)
+
+		for j := range(indices) {
+			allIndices = append(allIndices, indices[j] + verticesLen)
+		}
+	}
+
+	return allVertices, allIndices
+}
+
 func (c CompositeModel) IterateOverPolygons(f PolygonialFunc) {
 	for i := range c.Components {
 		c.Components[i].IterateOverPolygons(f)

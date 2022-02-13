@@ -1,7 +1,9 @@
 package graphics
 
 import (
+	"fmt"
 	"image/color"
+	"math"
 	"tulip/mymath"
 	"tulip/scene"
 )
@@ -9,11 +11,15 @@ import (
 type MyGrEngine struct {
 	cnv Canvas
 
-	zBuf  []float64
+	zBuf  [][]float64
 	zBack float64
+	sBuf  [][]float64
 
-	pst    psTransformer
-	shader gouraudShader
+	//sBuf []float64
+
+	pst psTransformer
+	// shader gouraudShader
+	shader shaderInterface
 }
 
 // Creating new engine
@@ -25,7 +31,14 @@ func NewMyGrEngine(cnv Canvas) *MyGrEngine {
 
 	// setting z-buffer
 	engine.zBack = 10000.0
-	engine.zBuf = make([]float64, engine.cnv.height()*engine.cnv.width())
+	engine.zBuf = make([][]float64, engine.cnv.height())
+	for i := range engine.zBuf {
+		engine.zBuf[i] = make([]float64, engine.cnv.width())
+	}
+	engine.sBuf = make([][]float64, engine.cnv.height())
+	for i := range engine.sBuf {
+		engine.sBuf[i] = make([]float64, engine.cnv.width())
+	}
 
 	engine.pst = makePST(cnv.width(), cnv.height())
 
@@ -34,7 +47,9 @@ func NewMyGrEngine(cnv Canvas) *MyGrEngine {
 
 func (engine *MyGrEngine) initZBuf() {
 	for i := range engine.zBuf {
-		engine.zBuf[i] = engine.zBack
+		for j := range engine.zBuf[i] {
+			engine.zBuf[i][j] = engine.zBack
+		}
 	}
 }
 
@@ -42,8 +57,8 @@ func (engine *MyGrEngine) initZBuf() {
 func (engine MyGrEngine) RenderScene(scn *scene.Scene) {
 	// shader settings
 	// projection matrix
-	proj := mymath.MakeFovProjectionM(90.0, float64(engine.cnv.height()) / float64(engine.cnv.width()), 1.0, 100.0)
-	
+	proj := mymath.MakeFovProjectionM(90.0, float64(engine.cnv.height())/float64(engine.cnv.width()), 1.0, 100.0)
+
 	// view matrix
 	vUp := mymath.MakeVec3(0, 1, 0)
 	t := mymath.MakeVec4(0, 0, 1, 0)
@@ -53,9 +68,28 @@ func (engine MyGrEngine) RenderScene(scn *scene.Scene) {
 	mCamera := mymath.MakePointAtM(scn.Camera.VCamera, scn.Camera.VTarget, vUp)
 	view := mymath.InverseTranslationM(mCamera)
 
-	// shader 
-	engine.shader.makeShader(proj, view, scn.LightSource)
-	
+	// shader
+	shadow := makeShadowMap(scn.LightSource, proj)
+	// engine.shader = shadow
+
+	// rendering
+	// engine.cnv.fill(color.Black)
+	// engine.initZBuf()
+
+	// for i := range scn.Objects {
+	// 	engine.renderModel(scn.Objects[i])
+	// }
+
+	// for i := range engine.zBuf {
+	// 	for j := range engine.zBuf[i] {
+	// 		engine.sBuf[i][j] = engine.zBuf[i][j]
+	// 	}
+	// }
+
+	lightViewProj := shadow.ViewProj
+	gouraud := makeGouraudShader(view, proj, lightViewProj, engine.sBuf, scn.LightSource, engine.pst)
+	engine.shader = gouraud
+
 	// rendering
 	engine.cnv.fill(scn.Background)
 	engine.initZBuf()
@@ -85,6 +119,8 @@ func (engine MyGrEngine) processVertices(vertices []scene.Vertex, indices []int)
 // extracting triangles out of the slice
 func (engine MyGrEngine) assembleTriangles(processed []Vertex, indices []int) {
 	end := len(indices) / 3
+
+	fmt.Println(len(processed))
 	for i := 0; i < end; i++ {
 		v0 := processed[indices[i*3]]
 		v1 := processed[indices[i*3+1]]
@@ -101,7 +137,6 @@ func (engine MyGrEngine) processTriangle(v0, v1, v2 Vertex) {
 	engine.renderTriangle(t)
 }
 
-
 // perspective division, viewport -> then rasterizing
 func (engine MyGrEngine) renderTriangle(t triangle) {
 	engine.pst.transform(&t.v0)
@@ -113,13 +148,13 @@ func (engine MyGrEngine) renderTriangle(t triangle) {
 	// engine.rasterizeNormals(t)
 }
 
-
 // z-buffer algorithm
-// TODO: refactoring 
-func (engine MyGrEngine) rasterizeTriangle(t triangle, buf []float64) {
+// TODO: refactoring
+func (engine MyGrEngine) rasterizeTriangle(t triangle, buf [][]float64) {
 	clr := t.v0.clr
-	p0, p1, p2 := t.v0.Point.Vec3, t.v1.Point.Vec3, t.v2.Point.Vec3
+	p0, p1, p2 := t.v0.Point, t.v1.Point, t.v2.Point
 	i0, i1, i2 := t.v0.Intensity, t.v1.Intensity, t.v2.Intensity
+	w0, w1, w2 := t.v0.worldPoint, t.v1.worldPoint, t.v2.worldPoint
 
 	print()
 	if p0.Y > p1.Y {
@@ -138,17 +173,17 @@ func (engine MyGrEngine) rasterizeTriangle(t triangle, buf []float64) {
 	dyTotal := p2.Y - p0.Y
 
 	for y := p0.Y; y <= p1.Y; y++ {
-		dySegment := p1.Y - p0.Y + 1
+		dySegment := p1.Y - p0.Y //+ 1
 		alpha := float64((y - p0.Y) / dyTotal)
 		beta := float64((y - p0.Y) / dySegment)
 
-		var a, b mymath.Vec3
+		var a, b mymath.Vec4
 
-		a = mymath.Vec3Diff(p2, p0)
+		a = mymath.Vec4Diff(p2, p0)
 		a.Mul(alpha)
 		a.Add(p0)
 
-		b = mymath.Vec3Diff(p1, p0)
+		b = mymath.Vec4Diff(p1, p0)
 		b.Mul(beta)
 		b.Add(p0)
 
@@ -156,9 +191,19 @@ func (engine MyGrEngine) rasterizeTriangle(t triangle, buf []float64) {
 		ia = i0 + (i2-i0)*alpha
 		ib = i0 + (i1-i0)*beta
 
+		var wa, wb mymath.Vec4
+		wa = mymath.Vec4Diff(w2, w0)
+		wa.Mul(alpha)
+		wa.Add(w0)
+
+		wb = mymath.Vec4Diff(w1, w0)
+		wb.Mul(beta)
+		wb.Add(w0)
+
 		if a.X > b.X {
 			a, b = b, a
 			ia, ib = ib, ia
+			wa, wb = wb, wa
 		}
 
 		for x := a.X; x <= b.X; x++ {
@@ -174,35 +219,45 @@ func (engine MyGrEngine) rasterizeTriangle(t triangle, buf []float64) {
 			}
 
 			p.Point.Z = a.Z + (b.Z-a.Z)*phi
+			p.Point.W = a.W + (b.W-a.W)*phi
 
 			p.Point.X = x
 			p.Point.Y = y
 
 			p.Intensity = ia + (ib-ia)*phi
 
-			idx := int(p.Point.X) + int(p.Point.Y)*engine.cnv.width()
-			if x >= 0 && y >= 0 && x < float64(engine.cnv.width()) && y < float64(engine.cnv.height()) {
-				if p.Point.Z < buf[idx] {
-					buf[idx] = p.Point.Z
-					pixelX, pixelY, pixelClr := engine.shader.ps(p, clr)
-					engine.cnv.setPixel(pixelX, pixelY, pixelClr)
+			p.worldPoint.X = wa.X + (wb.X-wa.X)*phi
+			p.worldPoint.Y = wa.Y + (wb.Y-wa.Y)*phi
+			p.worldPoint.Z = wa.Z + (wb.Z-wa.Z)*phi
+
+			// w := 1.0 / p.Point.W
+			// p.worldPoint.Mul(w)
+
+			//idx := int((math.Round)(p.Point.X)) + int((math.Round)(p.Point.Y))*engine.cnv.width()
+			px := int(math.Round(p.Point.X))
+			py := int(math.Round(p.Point.Y))
+			if px >= 0 && py >= 0 && px < engine.cnv.width() && py < engine.cnv.height() {
+				if p.Point.Z < buf[px][py] {
+					buf[px][py] = p.Point.Z
+					_, _, pixelClr := engine.shader.ps(p, clr)
+					engine.cnv.setPixel(px, py, pixelClr)
 				}
 			}
 		}
 	}
 
 	for y := p1.Y; y <= p2.Y; y++ {
-		dySegment := p2.Y - p1.Y + 1
+		dySegment := p2.Y - p1.Y //+ 1
 		alpha := float64((y - p0.Y) / dyTotal)
 		beta := float64((y - p1.Y) / dySegment)
 
-		var a, b mymath.Vec3
+		var a, b mymath.Vec4
 
-		a = mymath.Vec3Diff(p2, p0)
+		a = mymath.Vec4Diff(p2, p0)
 		a.Mul(alpha)
 		a.Add(p0)
 
-		b = mymath.Vec3Diff(p2, p1)
+		b = mymath.Vec4Diff(p2, p1)
 		b.Mul(beta)
 		b.Add(p1)
 
@@ -210,9 +265,19 @@ func (engine MyGrEngine) rasterizeTriangle(t triangle, buf []float64) {
 		ia = i0 + (i2-i0)*alpha
 		ib = i1 + (i2-i1)*beta
 
+		var wa, wb mymath.Vec4
+		wa = mymath.Vec4Diff(w2, w0)
+		wa.Mul(alpha)
+		wa.Add(w0)
+
+		wb = mymath.Vec4Diff(w2, w1)
+		wb.Mul(beta)
+		wb.Add(w1)
+
 		if a.X > b.X {
 			a, b = b, a
 			ia, ib = ib, ia
+			wa, wb = wb, wa
 		}
 
 		for x := a.X; x <= b.X; x++ {
@@ -228,24 +293,31 @@ func (engine MyGrEngine) rasterizeTriangle(t triangle, buf []float64) {
 			}
 
 			p.Point.Z = a.Z + (b.Z-a.Z)*phi
-
+			p.Point.W = a.W + (b.W-a.W)*phi
 			p.Point.X = x
 			p.Point.Y = y
 
 			p.Intensity = ia + (ib-ia)*phi
 
-			idx := int(p.Point.X) + int(p.Point.Y)*engine.cnv.width()
-			if x >= 0 && y >= 0 && x < float64(engine.cnv.width()) && y < float64(engine.cnv.height()) {
-				if p.Point.Z < buf[idx] {
-					buf[idx] = p.Point.Z
-					pixelX, pixelY, pixelClr := engine.shader.ps(p, clr)
-					engine.cnv.setPixel(pixelX, pixelY, pixelClr)
+			p.worldPoint.X = wa.X + (wb.X-wa.X)*phi
+			p.worldPoint.Y = wa.Y + (wb.Y-wa.Y)*phi
+			p.worldPoint.Z = wa.Z + (wb.Z-wa.Z)*phi
+
+			// w := 1.0 / p.Point.W
+			// p.worldPoint.Mul(w)
+
+			px := int(math.Round(p.Point.X))
+			py := int(math.Round(p.Point.Y))
+			if px >= 0 && py >= 0 && px < engine.cnv.width() && py < engine.cnv.height() {
+				if p.Point.Z < buf[px][py] {
+					buf[px][py] = p.Point.Z
+					_, _, pixelClr := engine.shader.ps(p, clr)
+					engine.cnv.setPixel(px, py, pixelClr)
 				}
 			}
 		}
 	}
 }
-
 
 // func makeProjection(w, h, n, f float64) mymath.Matrix4x4 {
 // 	var proj mymath.Matrix4x4
@@ -258,7 +330,6 @@ func (engine MyGrEngine) rasterizeTriangle(t triangle, buf []float64) {
 
 // 	return proj
 // }
-
 
 func (engine MyGrEngine) rasterizeWire(t triangle) {
 	h := engine.cnv.height()
