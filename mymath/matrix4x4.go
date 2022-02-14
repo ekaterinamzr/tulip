@@ -1,24 +1,10 @@
 package mymath
 
+import "math"
+
 // import "fmt"
 
 type Matrix4x4 [4][4]float64
-
-func MulVectorMatrix(vec Vec3d, m Matrix4x4) Vec3d {
-	var res Vec3d
-
-	// res.X = vec.X*m[0][0] + vec.Y*m[1][0] + vec.Z*m[2][0] + m[3][0]
-	// res.Y = vec.X*m[0][1] + vec.Y*m[1][1] + vec.Z*m[2][1] + m[3][1]
-	// res.Z = vec.X*m[0][2] + vec.Y*m[1][2] + vec.Z*m[2][2] + m[3][2]
-	// res.w = vec.X*m[0][3] + vec.Y*m[1][3] + vec.Z*m[2][3] + m[3][3]
-
-	res.X = vec.X*m[0][0] + vec.Y*m[0][1] + vec.Z*m[0][2] + m[0][3]
-	res.Y = vec.X*m[1][0] + vec.Y*m[1][1] + vec.Z*m[1][2] + m[1][3]
-	res.Z = vec.X*m[2][0] + vec.Y*m[2][1] + vec.Z*m[2][2] + m[2][3]
-	res.w = vec.X*m[3][0] + vec.Y*m[3][1] + vec.Z*m[3][2] + m[3][3]
-
-	return res
-}
 
 func MakeIdentityM() Matrix4x4 {
 	var m Matrix4x4
@@ -120,114 +106,125 @@ func (m Matrix4x4) Inverse() (Matrix4x4, bool) {
 
 	res = adjugate.MulNumber(1.0 / det)
 
-	// fmt.Println(MulMatrices(m, res))
-
 	return res, true
 }
 
-// func MakeTranslationM(x, y, z float64) Matrix4x4 {
-// 	var m Matrix4x4
 
-// 	m[0][0] = 1.0
-// 	m[1][1] = 1.0
-// 	m[2][2] = 1.0
-// 	m[3][3] = 1.0
-// 	m[3][0] = x
-// 	m[3][1] = y
-// 	m[3][2] = z
+func MakeFovProjectionM(fov, ar, n, f float64) Matrix4x4 {
+	var proj Matrix4x4
 
-// 	return m
-// }
+	fovRad := fov * math.Pi / 180.0
+	w := 1.0 / math.Tan(fovRad/2.0)
+	h := w * ar
 
-// func MakePointAtM(pos, target, up Vec3d) Matrix4x4 {
-// 	newForward := Vec3dDiff(target, pos)
-// 	newForward.Normalize()
+	proj[0][0] = h
+	proj[1][1] = w
+	proj[2][2] = f / (f - n)
+	proj[3][2] = -n * f / (f - n)
+	proj[2][3] = 1.0
 
-// 	a := Vec3dMul(newForward, up.DotProduct(newForward))
-// 	newUp := Vec3dDiff(up, a)
-// 	newUp.Normalize()
+	return proj
+}
 
-// 	newRight := newUp.CrossProduct(newForward)
+func MakeTranslationM(x, y, z float64) Matrix4x4 {
+	tr := MakeIdentityM()
+	tr[3][0] = x
+	tr[3][1] = y
+	tr[3][2] = z
 
-// 	var m Matrix4x4
-// 	m[0][0] = newRight.X
-// 	m[0][1] = newRight.Y
-// 	m[0][2] = newRight.Z
-// 	m[0][3] = 0.0
+	return tr
+}
 
-// 	m[1][0] = newUp.X
-// 	m[1][1] = newUp.Y
-// 	m[1][2] = newUp.Z
-// 	m[1][3] = 0.0
 
-// 	m[2][0] = newForward.X
-// 	m[2][1] = newForward.Y
-// 	m[2][2] = newForward.Z
-// 	m[2][3] = 0.0
+func MakePointAtM(pos, target, up Vec3) Matrix4x4 {
+	newForward := Vec3Diff(target, pos)
+	newForward.Normalize()
 
-// 	m[3][0] = pos.X
-// 	m[3][1] = pos.Y
-// 	m[3][2] = pos.Z
-// 	m[3][3] = 1.0
+	a := Vec3Mul(newForward, up.DotProduct(newForward))
+	newUp := Vec3Diff(up, a)
+	newUp.Normalize()
 
-// 	return m
-// }
+	newRight := newUp.CrossProduct(newForward)
 
-// func InverseTranslationM(m Matrix4x4) Matrix4x4 {
-// 	var res Matrix4x4
+	var m Matrix4x4
+	m[0][0] = newRight.X
+	m[0][1] = newRight.Y
+	m[0][2] = newRight.Z
+	m[0][3] = 0.0
 
-// 	res[0][0] = m[0][0]
-// 	res[0][1] = m[1][0]
-// 	res[0][2] = m[2][0]
-// 	res[0][3] = 0.0
+	m[1][0] = newUp.X
+	m[1][1] = newUp.Y
+	m[1][2] = newUp.Z
+	m[1][3] = 0.0
 
-// 	res[1][0] = m[0][1]
-// 	res[1][1] = m[1][1]
-// 	res[1][2] = m[2][1]
-// 	res[1][3] = 0.0
+	m[2][0] = newForward.X
+	m[2][1] = newForward.Y
+	m[2][2] = newForward.Z
+	m[2][3] = 0.0
 
-// 	res[2][0] = m[0][2]
-// 	res[2][1] = m[1][2]
-// 	res[2][2] = m[2][2]
-// 	res[2][3] = 0.0
+	m[3][0] = pos.X
+	m[3][1] = pos.Y
+	m[3][2] = pos.Z
+	m[3][3] = 1.0
 
-// 	res[3][0] = -(m[3][0]*res[0][0] + m[3][1]*res[1][0] + m[3][2]*res[2][0])
-// 	res[3][1] = -(m[3][0]*res[0][1] + m[3][1]*res[1][1] + m[3][2]*res[2][1])
-// 	res[3][2] = -(m[3][0]*res[0][2] + m[3][1]*res[1][2] + m[3][2]*res[2][2])
-// 	res[3][3] = 1.0
+	return m
+}
 
-// 	return res
-// }
+func InverseTranslationM(m Matrix4x4) Matrix4x4 {
+	var res Matrix4x4
 
-// func MakeRotationXM(fAngleRad float64) Matrix4x4 {
-// 	var m Matrix4x4
-// 	m[0][0] = 1.0
-// 	m[1][1] = math.Cos(fAngleRad)
-// 	m[1][2] = math.Sin(fAngleRad)
-// 	m[2][1] = -math.Sin(fAngleRad)
-// 	m[2][2] = math.Cos(fAngleRad)
-// 	m[3][3] = 1.0
-// 	return m
-// }
+	res[0][0] = m[0][0]
+	res[0][1] = m[1][0]
+	res[0][2] = m[2][0]
+	res[0][3] = 0.0
 
-// func MakeRotationYM(fAngleRad float64) Matrix4x4 {
-// 	var m Matrix4x4
-// 	m[0][0] = math.Cos(fAngleRad)
-// 	m[2][2] = math.Cos(fAngleRad)
-// 	m[0][2] = math.Sin(fAngleRad)
-// 	m[2][0] = -math.Sin(fAngleRad)
-// 	m[1][1] = 1.0
-// 	m[3][3] = 1.0
-// 	return m
-// }
+	res[1][0] = m[0][1]
+	res[1][1] = m[1][1]
+	res[1][2] = m[2][1]
+	res[1][3] = 0.0
 
-// func MakeRotationZM(fAngleRad float64) Matrix4x4 {
-// 	var m Matrix4x4
-// 	m[2][2] = 1.0
-// 	m[0][0] = math.Cos(fAngleRad)
-// 	m[0][1] = math.Sin(fAngleRad)
-// 	m[1][0] = -math.Sin(fAngleRad)
-// 	m[1][1] = math.Cos(fAngleRad)
-// 	m[3][3] = 1.0
-// 	return m
-// }
+	res[2][0] = m[0][2]
+	res[2][1] = m[1][2]
+	res[2][2] = m[2][2]
+	res[2][3] = 0.0
+
+	res[3][0] = -(m[3][0]*res[0][0] + m[3][1]*res[1][0] + m[3][2]*res[2][0])
+	res[3][1] = -(m[3][0]*res[0][1] + m[3][1]*res[1][1] + m[3][2]*res[2][1])
+	res[3][2] = -(m[3][0]*res[0][2] + m[3][1]*res[1][2] + m[3][2]*res[2][2])
+	res[3][3] = 1.0
+
+	return res
+}
+
+func MakeRotationXM(fAngleRad float64) Matrix4x4 {
+	var m Matrix4x4
+	m[0][0] = 1.0
+	m[1][1] = math.Cos(fAngleRad)
+	m[1][2] = math.Sin(fAngleRad)
+	m[2][1] = -math.Sin(fAngleRad)
+	m[2][2] = math.Cos(fAngleRad)
+	m[3][3] = 1.0
+	return m
+}
+
+func MakeRotationYM(fAngleRad float64) Matrix4x4 {
+	var m Matrix4x4
+	m[0][0] = math.Cos(fAngleRad)
+	m[2][2] = math.Cos(fAngleRad)
+	m[0][2] = math.Sin(fAngleRad)
+	m[2][0] = -math.Sin(fAngleRad)
+	m[1][1] = 1.0
+	m[3][3] = 1.0
+	return m
+}
+
+func MakeRotationZM(fAngleRad float64) Matrix4x4 {
+	var m Matrix4x4
+	m[2][2] = 1.0
+	m[0][0] = math.Cos(fAngleRad)
+	m[0][1] = math.Sin(fAngleRad)
+	m[1][0] = -math.Sin(fAngleRad)
+	m[1][1] = math.Cos(fAngleRad)
+	m[3][3] = 1.0
+	return m
+}

@@ -1,292 +1,167 @@
 package graphics
 
 import (
-	// "fmt"
-	"image"
+	"fmt"
 	"image/color"
-
-	// "math"
+	"math"
 	"tulip/mymath"
 	"tulip/scene"
 )
 
-type MyGraphicsEngine struct {
+type MyGrEngine struct {
 	cnv Canvas
 
-	zbuf  []float64
-	sbuf  []float64
-	zback float64
+	zBuf  [][]float64
+	zBack float64
+	sBuf  [][]float64
 
-	Projection mymath.Matrix4x4
-	viewport   mymath.Matrix4x4
-	view       mymath.Matrix4x4
+	//sBuf []float64
 
-	world2Screen mymath.Matrix4x4
-	sun2Screen   mymath.Matrix4x4
-
-	worldS2sunS mymath.Matrix4x4
-
-	scn *scene.Scene
+	pst psTransformer
+	// shader gouraudShader
+	shader shaderInterface
 }
 
-func NewEngine(h, w int) *MyGraphicsEngine {
-	engine := new(MyGraphicsEngine)
+// Creating new engine
+func NewMyGrEngine(cnv Canvas) *MyGrEngine {
+	engine := new(MyGrEngine)
 
-	engine.cnv = MakeImageCanvas(h, w)
-	engine.zback = -1000
-	engine.zbuf = make([]float64, h*w)
-	engine.sbuf = make([]float64, h*w)
+	// setting canvas
+	engine.cnv = cnv
 
-	//engine.setViewport(float64(w)/8.0, float64(h)/8.0, float64(w)*3.0/4.0, float64(h)*3.0/4.0)
-	engine.viewport = engine.makeViewport(0, 0, float64(w), float64(h))
-	//engine.setProjection()
+	// setting z-buffer
+	engine.zBack = 10000.0
+	engine.zBuf = make([][]float64, engine.cnv.height())
+	for i := range engine.zBuf {
+		engine.zBuf[i] = make([]float64, engine.cnv.width())
+	}
+	engine.sBuf = make([][]float64, engine.cnv.height())
+	for i := range engine.sBuf {
+		engine.sBuf[i] = make([]float64, engine.cnv.width())
+	}
+
+	engine.pst = makePST(cnv.width(), cnv.height())
 
 	return engine
 }
 
-func (engine MyGraphicsEngine) makeViewport(x, y, w, h float64) mymath.Matrix4x4 {
-	viewport := mymath.MakeIdentityM()
-	depth := 500.0
-
-	viewport[0][3] = x + w/2.0
-	viewport[1][3] = y + h/2.0
-	viewport[2][3] = depth / 2.0
-
-	viewport[0][0] = w / 2.0
-	viewport[1][1] = h / 2.0
-	viewport[2][2] = depth / 2.0
-
-	return viewport
-}
-
-func makeProjection(eye, center mymath.Vec3d) (mymath.Matrix4x4, bool) {
-	var proj mymath.Matrix4x4
-
-	dist := mymath.Vec3dDiff(eye, center).Length()
-
-	if dist == 0 {
-		return proj, false
-	}
-
-	proj = mymath.MakeIdentityM()
-	proj[3][2] = -1.0 / dist
-
-	return proj, true
-}
-
-func makeProjectionK(k float64) mymath.Matrix4x4 {
-	proj := mymath.MakeIdentityM()
-	proj[3][2] = k
-
-	return proj
-}
-
-func (engine *MyGraphicsEngine) initZBuffer() {
-	for i := range engine.zbuf {
-		engine.zbuf[i] = engine.zback
-		engine.sbuf[i] = engine.zback
+func (engine *MyGrEngine) initZBuf() {
+	for i := range engine.zBuf {
+		for j := range engine.zBuf[i] {
+			engine.zBuf[i][j] = engine.zBack
+		}
 	}
 }
 
-// Матрица view переводит координаты в новый базис
-func (engine MyGraphicsEngine) lookAt(eye, center, up mymath.Vec3d) mymath.Matrix4x4 {
-	var view mymath.Matrix4x4
+// Rendering scene
+func (engine MyGrEngine) RenderScene(scn *scene.Scene) {
+	// shader settings
+	// projection matrix
+	proj := mymath.MakeFovProjectionM(90.0, float64(engine.cnv.height())/float64(engine.cnv.width()), 1.0, 100.0)
 
-	z := mymath.Vec3dDiff(eye, center)
-	z.Normalize()
+	// view matrix
+	vUp := mymath.MakeVec3(0, 1, 0)
+	t := mymath.MakeVec4(0, 0, 1, 0)
+	scn.Camera.VLookDir = mymath.MulVecMat(t, mymath.MakeRotationYM(scn.Camera.FYaw))
+	scn.Camera.VTarget = mymath.Vec3Sum(scn.Camera.VCamera, scn.Camera.VLookDir.Vec3)
+	scn.Camera.VForward = mymath.Vec3Mul(scn.Camera.VLookDir.Vec3, 1.0)
+	mCamera := mymath.MakePointAtM(scn.Camera.VCamera, scn.Camera.VTarget, vUp)
+	view := mymath.InverseTranslationM(mCamera)
 
-	x := up.CrossProduct(z)
-	x.Normalize()
+	// shader
+	shadow := makeShadowMap(scn.LightSource, proj)
+	// engine.shader = shadow
 
-	y := z.CrossProduct(x)
-	y.Normalize()
+	// rendering
+	// engine.cnv.fill(color.Black)
+	// engine.initZBuf()
 
-	minv := mymath.MakeIdentityM()
-	tr := mymath.MakeIdentityM()
-
-	// for i := 0; i < 3; i++ {
-	// 	minv[0][1] = x[i]
+	// for i := range scn.Objects {
+	// 	engine.renderModel(scn.Objects[i])
 	// }
 
-	minv[0][0] = x.X
-	minv[1][0] = y.X
-	minv[2][0] = z.X
-	tr[0][3] = -center.X
+	// for i := range engine.zBuf {
+	// 	for j := range engine.zBuf[i] {
+	// 		engine.sBuf[i][j] = engine.zBuf[i][j]
+	// 	}
+	// }
 
-	minv[0][1] = x.Y
-	minv[1][1] = y.Y
-	minv[2][1] = z.Y
-	tr[1][3] = -center.Y
+	lightViewProj := shadow.ViewProj
+	gouraud := makeGouraudShader(view, proj, lightViewProj, engine.sBuf, scn.LightSource, engine.pst)
+	engine.shader = gouraud
 
-	minv[0][2] = x.Z
-	minv[1][2] = y.Z
-	minv[2][2] = z.Z
-	tr[2][3] = -center.Z
+	// rendering
+	engine.cnv.fill(scn.Background)
+	engine.initZBuf()
 
-	view = mymath.MulMatrices(minv, tr)
-
-	return view
+	for i := range scn.Objects {
+		engine.renderModel(scn.Objects[i])
+	}
 }
 
-func (engine MyGraphicsEngine) RenderScene(scn *scene.Scene, onlyShadowMap, shadows bool) {
-	camPos := scn.Camera.Pos
-	center := scn.Camera.Center
-	engine.scn = scn
+// extracting vertices and indices in a slice form
+// TODO: change the model structure
+func (engine MyGrEngine) renderModel(m scene.PolygonialModel) {
+	vertices, indices := m.GetVertices()
+	engine.processVertices(vertices, indices)
+}
 
-	lightPos := scn.LightSource.Pos
-
-	sunView := engine.lookAt(lightPos, center, mymath.MakeVec3d(0, 1, 0))
-	sunProj := makeProjectionK(0)
-
-	engine.view = engine.lookAt(camPos, center, mymath.MakeVec3d(0, 1, 0))
-
-	ok := true
-	engine.Projection, ok = makeProjection(camPos, center)
-	// engine.Projection = makeProjectionK(0)
-
-	if !ok {
-		// fmt.Println("Could not make projection")
-		return
+// applying vertex shader, world -> viewProj
+// scene.Vertex -> graphics.Vertex struct
+func (engine MyGrEngine) processVertices(vertices []scene.Vertex, indices []int) {
+	processed := make([]Vertex, len(vertices))
+	for i := range vertices {
+		processed[i] = engine.shader.vs(vertices[i])
 	}
+	engine.assembleTriangles(processed, indices)
+}
 
-	engine.world2Screen = mymath.MulMatrices(engine.viewport, engine.Projection)
-	engine.world2Screen = mymath.MulMatrices(engine.view, engine.world2Screen)
+// extracting triangles out of the slice
+func (engine MyGrEngine) assembleTriangles(processed []Vertex, indices []int) {
+	end := len(indices) / 3
 
-	engine.sun2Screen = mymath.MulMatrices(engine.viewport, sunProj)
-	engine.sun2Screen = mymath.MulMatrices(sunView, engine.sun2Screen)
+	fmt.Println(len(processed))
+	for i := 0; i < end; i++ {
+		if indices[i*3] < len(processed) && indices[i*3+1] < len(processed) && indices[i*3+2] < len(processed) {
+			v0 := processed[indices[i*3]]
+			v1 := processed[indices[i*3+1]]
+			v2 := processed[indices[i*3+2]]
 
-	mInv, _ := engine.world2Screen.Inverse()
-
-	engine.worldS2sunS = mymath.MulMatrices(engine.sun2Screen, mInv)
-
-	// engine.cnv.fill(scn.Background)
-
-	engine.initZBuffer()
-
-	//engine.RenderModel(scn.Ground)
-
-	if onlyShadowMap || shadows {
-		engine.cnv.fill(color.NRGBA{100, 100, 200, 255})
-		for i := 1; i < len(scn.Objects); i++ {
-			//fmt.Println("Rendering object ", i)
-			engine.RenderModelShadow(scn.Objects[i])
+			engine.processTriangle(v0, v1, v2)
+		} else {
+			fmt.Println(indices[i*3], indices[i*3+1], indices[i*3+2])
 		}
+		
 	}
-
-	if !onlyShadowMap {
-		engine.cnv.fill(scn.Background)
-		for i := range scn.Objects {
-			//fmt.Println("Rendering object ", i)
-			engine.RenderModel(scn.Objects[i])
-		}
-	}
-
 }
 
-func (engine MyGraphicsEngine) inShadow(p mymath.Vec3d) bool {
-	pSun := mymath.MulVectorMatrix(p, engine.worldS2sunS)
-	pSun.DivW()
-	idx := int(p.X) + int(p.Y)*engine.cnv.width()
+// creating a tringle -> then rendering
+func (engine MyGrEngine) processTriangle(v0, v1, v2 Vertex) {
+	t := makeTriangle(v0, v1, v2)
 
-	if engine.sbuf[idx] == engine.zback {
-		return false
-	}
-
-	if engine.sbuf[idx] > pSun.Z {
-		return true
-	}
-
-	return false
+	engine.renderTriangle(t)
 }
 
-func (engine MyGraphicsEngine) RenderModel(obj scene.PolygonialModel) {
-	obj.IterateOverPolygons(engine.RenderPolygon)
+// perspective division, viewport -> then rasterizing
+func (engine MyGrEngine) renderTriangle(t triangle) {
+	engine.pst.transform(&t.v0)
+	engine.pst.transform(&t.v1)
+	engine.pst.transform(&t.v2)
+
+	engine.rasterizeTriangle(t, engine.zBuf)
+	// engine.rasterizeWire(t)
+	// engine.rasterizeNormals(t)
 }
 
-func (engine MyGraphicsEngine) RenderPolygon(v0, v1, v2 scene.Vertex, clr color.NRGBA) {
-	//fmt.Println("Rendering polygon ", v0, v1, v2)
-	var (
-		screenCoords [3]mymath.Vec3d
-		intensity    [3]float64
-	)
-	// world2Screen := mymath.MulMatrices(engine.viewport, engine.Projection)
-	// world2Screen = mymath.MulMatrices(engine.view, world2Screen)
+// z-buffer algorithm
+// TODO: refactoring
+func (engine MyGrEngine) rasterizeTriangle(t triangle, buf [][]float64) {
+	clr := t.v0.clr
+	p0, p1, p2 := t.v0.Point, t.v1.Point, t.v2.Point
+	i0, i1, i2 := t.v0.Intensity, t.v1.Intensity, t.v2.Intensity
+	w0, w1, w2 := t.v0.worldPoint, t.v1.worldPoint, t.v2.worldPoint
 
-	screenCoords[0] = mymath.MulVectorMatrix(v0.Point, engine.world2Screen)
-	screenCoords[1] = mymath.MulVectorMatrix(v1.Point, engine.world2Screen)
-	screenCoords[2] = mymath.MulVectorMatrix(v2.Point, engine.world2Screen)
-
-	// fmt.Println("Screen polygon ", screenCoords[0], screenCoords[1], screenCoords[2])
-	// fmt.Println()
-
-	screenCoords[0].DivW()
-	screenCoords[1].DivW()
-	screenCoords[2].DivW()
-
-	// fmt.Println("Screen polygon ", screenCoords[0], screenCoords[1], screenCoords[2])
-	// fmt.Println()
-
-	intensity[0] = scene.VectorIntensity(v0.Normal, engine.scn.LightSource)
-	intensity[1] = scene.VectorIntensity(v1.Normal, engine.scn.LightSource)
-	intensity[2] = scene.VectorIntensity(v2.Normal, engine.scn.LightSource)
-
-	engine.rasterizePolygon(screenCoords[0], screenCoords[1], screenCoords[2],
-		intensity[0], intensity[1], intensity[2], clr, engine.zbuf, true)
-
-	//engine.rasterizeWire(screenCoords[0], screenCoords[1], screenCoords[2], color.NRGBA{0, 0, 0, 255})
-}
-
-func (engine MyGraphicsEngine) RenderModelShadow(obj scene.PolygonialModel) {
-	obj.IterateOverPolygons(engine.RenderPolygonShadow)
-}
-
-func (engine MyGraphicsEngine) RenderPolygonShadow(v0, v1, v2 scene.Vertex, clr color.NRGBA) {
-	//fmt.Println("Rendering polygon ", v0, v1, v2)
-	var (
-		screenCoords [3]mymath.Vec3d
-		intensity    [3]float64
-	)
-
-	screenCoords[0] = mymath.MulVectorMatrix(v0.Point, engine.sun2Screen)
-	screenCoords[1] = mymath.MulVectorMatrix(v1.Point, engine.sun2Screen)
-	screenCoords[2] = mymath.MulVectorMatrix(v2.Point, engine.sun2Screen)
-
-	// fmt.Println("Screen polygon ", screenCoords[0], screenCoords[1], screenCoords[2])
-	// fmt.Println()
-
-	screenCoords[0].DivW()
-	screenCoords[1].DivW()
-	screenCoords[2].DivW()
-
-	// fmt.Println("Screen polygon ", screenCoords[0], screenCoords[1], screenCoords[2])
-	// fmt.Println()
-
-	intensity[0] = scene.VectorIntensity(v0.Normal, engine.scn.LightSource)
-	intensity[1] = scene.VectorIntensity(v1.Normal, engine.scn.LightSource)
-	intensity[2] = scene.VectorIntensity(v2.Normal, engine.scn.LightSource)
-
-	engine.rasterizePolygon(screenCoords[0], screenCoords[1], screenCoords[2],
-		intensity[0], intensity[1], intensity[2], color.NRGBA{255, 255, 255, 255}, engine.sbuf, false)
-
-	//engine.rasterizeWire(screenCoords[0], screenCoords[1], screenCoords[2], color.NRGBA{0, 0, 0, 255})
-}
-
-func point2pixel(h int, v mymath.Vec3d) (int, int) {
-	return int(v.X), h - int(v.Y)
-}
-
-func (engine MyGraphicsEngine) rasterizeWire(p0, p1, p2 mymath.Vec3d, clr color.NRGBA) {
-	h := engine.cnv.height()
-	x0, y0 := point2pixel(h, p0)
-	x1, y1 := point2pixel(h, p1)
-	x2, y2 := point2pixel(h, p2)
-
-	engine.cnv.drawLine(x0, y0, x1, y1, clr)
-	engine.cnv.drawLine(x1, y1, x2, y2, clr)
-	engine.cnv.drawLine(x0, y0, x2, y2, clr)
-}
-
-func (engine MyGraphicsEngine) rasterizePolygon(p0, p1, p2 mymath.Vec3d, i0, i1, i2 float64, clr color.NRGBA, buf []float64, draw bool) {
+	print()
 	if p0.Y > p1.Y {
 		p0, p1 = p1, p0
 		i0, i1 = i1, i0
@@ -303,34 +178,43 @@ func (engine MyGraphicsEngine) rasterizePolygon(p0, p1, p2 mymath.Vec3d, i0, i1,
 	dyTotal := p2.Y - p0.Y
 
 	for y := p0.Y; y <= p1.Y; y++ {
-		dySegment := p1.Y - p0.Y + 1
+		dySegment := p1.Y - p0.Y //+ 1
 		alpha := float64((y - p0.Y) / dyTotal)
 		beta := float64((y - p0.Y) / dySegment)
 
-		var a, b mymath.Vec3d
+		var a, b mymath.Vec4
 
-		a = mymath.Vec3dDiff(p2, p0)
+		a = mymath.Vec4Diff(p2, p0)
 		a.Mul(alpha)
 		a.Add(p0)
 
-		b = mymath.Vec3dDiff(p1, p0)
+		b = mymath.Vec4Diff(p1, p0)
 		b.Mul(beta)
 		b.Add(p0)
 
 		var ia, ib float64
-
 		ia = i0 + (i2-i0)*alpha
 		ib = i0 + (i1-i0)*beta
+
+		var wa, wb mymath.Vec4
+		wa = mymath.Vec4Diff(w2, w0)
+		wa.Mul(alpha)
+		wa.Add(w0)
+
+		wb = mymath.Vec4Diff(w1, w0)
+		wb.Mul(beta)
+		wb.Add(w0)
 
 		if a.X > b.X {
 			a, b = b, a
 			ia, ib = ib, ia
+			wa, wb = wb, wa
 		}
 
 		for x := a.X; x <= b.X; x++ {
 			var (
 				phi float64
-				p   mymath.Vec3d
+				p   Vertex
 			)
 
 			if a.X == b.X {
@@ -339,62 +223,72 @@ func (engine MyGraphicsEngine) rasterizePolygon(p0, p1, p2 mymath.Vec3d, i0, i1,
 				phi = (x - a.X) / (b.X - a.X)
 			}
 
-			p.Z = a.Z + (b.Z-a.Z)*phi
+			p.Point.Z = a.Z + (b.Z-a.Z)*phi
+			p.Point.W = a.W + (b.W-a.W)*phi
 
-			p.X = x
-			p.Y = y
+			p.Point.X = x
+			p.Point.Y = y
 
-			intensity := ia + (ib-ia)*phi
+			p.Intensity = ia + (ib-ia)*phi
 
-			idx := int(p.X) + int(p.Y)*engine.cnv.width()
-			if x >= 0 && y >= 0 && x < float64(engine.cnv.width()) && y < float64(engine.cnv.height()) {
-				if buf[idx] < p.Z {
-					buf[idx] = p.Z
+			p.worldPoint.X = wa.X + (wb.X-wa.X)*phi
+			p.worldPoint.Y = wa.Y + (wb.Y-wa.Y)*phi
+			p.worldPoint.Z = wa.Z + (wb.Z-wa.Z)*phi
 
-					if draw {
-						pixelX, pixelY := point2pixel(engine.cnv.height(), p)
-						if engine.inShadow(p) {
-							engine.cnv.setPixel(pixelX, pixelY, color.Black)
-						} else {
-							engine.cnv.setPixel(pixelX, pixelY, scene.Lightness(clr, intensity))
-						}
+			// w := 1.0 / p.Point.W
+			// p.worldPoint.Mul(w)
 
-					}
-
+			//idx := int((math.Round)(p.Point.X)) + int((math.Round)(p.Point.Y))*engine.cnv.width()
+			px := int(math.Round(p.Point.X))
+			py := int(math.Round(p.Point.Y))
+			if px >= 0 && py >= 0 && px < engine.cnv.width() && py < engine.cnv.height() {
+				if p.Point.Z < buf[px][py] {
+					buf[px][py] = p.Point.Z
+					_, _, pixelClr := engine.shader.ps(p, clr)
+					engine.cnv.setPixel(px, py, pixelClr)
 				}
 			}
 		}
 	}
 
 	for y := p1.Y; y <= p2.Y; y++ {
-		dySegment := p2.Y - p1.Y + 1
+		dySegment := p2.Y - p1.Y //+ 1
 		alpha := float64((y - p0.Y) / dyTotal)
 		beta := float64((y - p1.Y) / dySegment)
 
-		var a, b mymath.Vec3d
+		var a, b mymath.Vec4
 
-		a = mymath.Vec3dDiff(p2, p0)
+		a = mymath.Vec4Diff(p2, p0)
 		a.Mul(alpha)
 		a.Add(p0)
 
-		b = mymath.Vec3dDiff(p2, p1)
+		b = mymath.Vec4Diff(p2, p1)
 		b.Mul(beta)
 		b.Add(p1)
 
 		var ia, ib float64
-
 		ia = i0 + (i2-i0)*alpha
-		ib = i0 + (i1-i0)*beta
+		ib = i1 + (i2-i1)*beta
+
+		var wa, wb mymath.Vec4
+		wa = mymath.Vec4Diff(w2, w0)
+		wa.Mul(alpha)
+		wa.Add(w0)
+
+		wb = mymath.Vec4Diff(w2, w1)
+		wb.Mul(beta)
+		wb.Add(w1)
 
 		if a.X > b.X {
 			a, b = b, a
 			ia, ib = ib, ia
+			wa, wb = wb, wa
 		}
 
 		for x := a.X; x <= b.X; x++ {
 			var (
 				phi float64
-				p   mymath.Vec3d
+				p   Vertex
 			)
 
 			if a.X == b.X {
@@ -403,36 +297,81 @@ func (engine MyGraphicsEngine) rasterizePolygon(p0, p1, p2 mymath.Vec3d, i0, i1,
 				phi = (x - a.X) / (b.X - a.X)
 			}
 
-			p.Z = a.Z + (b.Z-a.Z)*phi
+			p.Point.Z = a.Z + (b.Z-a.Z)*phi
+			p.Point.W = a.W + (b.W-a.W)*phi
+			p.Point.X = x
+			p.Point.Y = y
 
-			p.X = x
-			p.Y = y
+			p.Intensity = ia + (ib-ia)*phi
 
-			intensity := ia + (ib-ia)*phi
+			p.worldPoint.X = wa.X + (wb.X-wa.X)*phi
+			p.worldPoint.Y = wa.Y + (wb.Y-wa.Y)*phi
+			p.worldPoint.Z = wa.Z + (wb.Z-wa.Z)*phi
 
-			idx := int(p.X) + int(p.Y)*engine.cnv.width()
-			if x >= 0 && y >= 0 && x < float64(engine.cnv.width()) && y < float64(engine.cnv.height()) {
-				if buf[idx] < p.Z {
-					buf[idx] = p.Z
+			// w := 1.0 / p.Point.W
+			// p.worldPoint.Mul(w)
 
-					if draw {
-						pixelX, pixelY := point2pixel(engine.cnv.height(), p)
-						if engine.inShadow(p) {
-							engine.cnv.setPixel(pixelX, pixelY, color.Black)
-						} else {
-							engine.cnv.setPixel(pixelX, pixelY, scene.Lightness(clr, intensity))
-						}
-
-					} else {
-						pixelX, pixelY := point2pixel(engine.cnv.height(), p)
-						engine.cnv.setPixel(pixelX, pixelY, scene.Lightness(color.NRGBA{0, 0, 0, 255}, intensity))
-					}
+			px := int(math.Round(p.Point.X))
+			py := int(math.Round(p.Point.Y))
+			if px >= 0 && py >= 0 && px < engine.cnv.width() && py < engine.cnv.height() {
+				if p.Point.Z < buf[px][py] {
+					buf[px][py] = p.Point.Z
+					_, _, pixelClr := engine.shader.ps(p, clr)
+					engine.cnv.setPixel(px, py, pixelClr)
 				}
 			}
 		}
 	}
 }
 
-func (engine MyGraphicsEngine) Image() image.Image {
-	return engine.cnv.Image()
+// func makeProjection(w, h, n, f float64) mymath.Matrix4x4 {
+// 	var proj mymath.Matrix4x4
+
+// 	proj[0][0] = 2.0 * n / w
+// 	proj[1][1] = 2.0 * n / h
+// 	proj[2][2] = f / (f - n)
+// 	proj[3][2] = -n * f / (f - n)
+// 	proj[2][3] = 1.0
+
+// 	return proj
+// }
+
+func (engine MyGrEngine) rasterizeWire(t triangle) {
+	h := engine.cnv.height()
+	x0, y0 := point2pixel(h, t.v0.Point.Vec3)
+	x1, y1 := point2pixel(h, t.v1.Point.Vec3)
+	x2, y2 := point2pixel(h, t.v2.Point.Vec3)
+
+	engine.cnv.drawLine(x0, y0, x1, y1, color.Black)
+	engine.cnv.drawLine(x1, y1, x2, y2, color.Black)
+	engine.cnv.drawLine(x0, y0, x2, y2, color.Black)
+}
+
+func (engine MyGrEngine) rasterizeNormals(t triangle) {
+	h := engine.cnv.height()
+
+	end0 := mymath.Vec3Sum(t.v0.Point.Vec3, t.v0.Normal.Vec3)
+	end0.Scale(t.v0.Point.Vec3, 10)
+
+	end1 := mymath.Vec3Sum(t.v1.Point.Vec3, t.v1.Normal.Vec3)
+	end1.Scale(t.v1.Point.Vec3, 10)
+
+	end2 := mymath.Vec3Sum(t.v2.Point.Vec3, t.v2.Normal.Vec3)
+	end2.Scale(t.v2.Point.Vec3, 10)
+
+	x00, y00 := point2pixel(h, end0)
+	x10, y10 := point2pixel(h, end1)
+	x20, y20 := point2pixel(h, end2)
+
+	x01, y01 := point2pixel(h, t.v0.Point.Vec3)
+	x11, y11 := point2pixel(h, t.v1.Point.Vec3)
+	x21, y21 := point2pixel(h, t.v2.Point.Vec3)
+
+	engine.cnv.drawLine(x00, y00, x01, y01, color.Black)
+	engine.cnv.drawLine(x10, y10, x11, y11, color.Black)
+	engine.cnv.drawLine(x20, y20, x21, y21, color.Black)
+}
+
+func point2pixel(h int, v mymath.Vec3) (int, int) {
+	return int(v.X), h - int(v.Y)
 }

@@ -5,41 +5,59 @@ import (
 )
 
 type Camera struct {
-	Pos mymath.Vec3d
-	Center mymath.Vec3d // камера смотрит в центр
-	// VCamera  mymath.Vec3d
-	// VLookDir mymath.Vec3d
-	// FYaw     float64
-	// FTheta   float64
-	// VTarget  mymath.Vec3d
+	Pos mymath.Vec3
 
-	// VForward mymath.Vec3d
+	VCamera  mymath.Vec3
+	VLookDir mymath.Vec4
+	FYaw     float64
+	FTheta   float64
+	VTarget  mymath.Vec3
+
+	VForward mymath.Vec3
+	// Aspect_ratio float64
+	// Hfov, Vfov float64
+
+	// Htrack, Vtrack float64
+	// Speed float64
+	//Center mymath.Vec3 // Camera is viewing center
 }
 
-func (c *Camera) SetPos(pos mymath.Vec3d) {
-	c.Pos = pos
+func MakeCamera(pos mymath.Vec3) Camera {
+	var c Camera
+	c.VCamera = pos
+
+	//vUp := mymath.MakeVec3(0, 1, 0)
+	c.VTarget = mymath.MakeVec3(0, 0, 1)
+	//mCameraRot := mymath.MakeRotationYM(c.FYaw)
+	//c.VLookDir = mymath.MulVectorMatrix(c.VTarget, mCameraRot)
+	//c.VTarget = mymath.Vec3Sum(c.VCamera, c.VLookDir.Vec3)
+
+	c.VForward = mymath.Vec3Mul(c.VLookDir.Vec3, 1.0)
+
+	return c
 }
 
-func (c *Camera) Move(delta mymath.Vec3d) {
-	c.Pos.Move(delta)
-	c.Center.Move(delta)
-}
-
-// func (c Camera) Pos() mymath.Vec3d {
-// 	return c.pos
-// }
-
-// func MakeCamera(pos mymath.Vec3d) Camera {
+// func MakeCamera(pos mymath.Vec3, ar, hfov, speed float64) Camera {
 // 	var c Camera
-// 	c.VCamera = mymath.MakeVec3d(0, 0, 0)
 
-// 	//vUp := mymath.MakeVec3d(0, 1, 0)
-// 	c.VTarget = mymath.MakeVec3d(0, 0, 1)
-// 	//mCameraRot := mymath.MakeRotationYM(c.FYaw)
-// 	//c.VLookDir = mymath.MulVectorMatrix(c.VTarget, mCameraRot)
-// 	c.VTarget = mymath.Vec3dSum(c.VCamera, c.VLookDir)
+// 	c.Pos = pos
+// 	c.Aspect_ratio = ar
+// 	c.Hfov = 95.0
+// 	c.Vfov = c.Hfov / c.Aspect_ratio
 
-// 	c.VForward = mymath.Vec3dMul(c.VLookDir, 1.0)
+// 	// c.Htrack = c.Hfov / float64()
+
+// 	c.Speed = speed
 
 // 	return c
 // }
+
+func (c *Camera) SetPos(pos mymath.Vec3) {
+	c.Pos = pos
+}
+
+func (c *Camera) Move(delta mymath.Vec3) {
+	c.Pos.Move(delta)
+	//c.Center.Move(delta)
+}
+

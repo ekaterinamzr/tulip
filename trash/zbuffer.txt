@@ -189,10 +189,10 @@ func vectorIntersectPlane(planeP, planeN, lineStart, lineEnd mymath.Vec3d) mymat
 	return mymath.Vec3dSum(lineStart, lineToIntersect)
 }
 
-type triangle [3]scene.Vertex
+type oldTriangle [3]scene.Vertex
 
-func makeTriangle(v1, v2, v3 scene.Vertex) triangle {
-	var t triangle
+func makeTriangle(v1, v2, v3 scene.Vertex) oldTriangle {
+	var t oldTriangle
 	t[0], t[1], t[2] = v1, v2, v3
 	return t
 }
@@ -203,13 +203,13 @@ func dist(p, planeP, planeN mymath.Vec3d) float64 {
 	return planeN.X*p.X + planeN.Y*p.Y + planeN.Z*p.Z - planeN.DotProduct(planeP)
 }
 
-func ClipAgainstPlane(planeP, planeN mymath.Vec3d, t triangle) ([2]triangle, int) {
+func ClipAgainstPlane(planeP, planeN mymath.Vec3d, t oldTriangle) ([2]oldTriangle, int) {
 	planeN.Normalize()
 
 	var (
 		inPoints, outPoints           [3]scene.Vertex
 		inPointsCount, outPointsCount int
-		res                           [2]triangle
+		res                           [2]oldTriangle
 	)
 
 	d0 := dist(t[0].Point, planeP, planeN)
@@ -282,19 +282,19 @@ func ClipAgainstPlane(planeP, planeN mymath.Vec3d, t triangle) ([2]triangle, int
 	return res, 0
 }
 
-func (engine ZBufferGraphicsEngine) convertToViewSpace(t *triangle) {
+func (engine ZBufferGraphicsEngine) convertToViewSpace(t *oldTriangle) {
 	t[0].Point.MulMatrix(engine.mView)
 	t[1].Point.MulMatrix(engine.mView)
 	t[2].Point.MulMatrix(engine.mView)
 }
 
-func (engine ZBufferGraphicsEngine) convertToSunSpace(t *triangle) {
+func (engine ZBufferGraphicsEngine) convertToSunSpace(t *oldTriangle) {
 	t[0].Point.MulMatrix(engine.mSunView)
 	t[1].Point.MulMatrix(engine.mSunView)
 	t[2].Point.MulMatrix(engine.mSunView)
 }
 
-func (engine ZBufferGraphicsEngine) project(t *triangle) {
+func (engine ZBufferGraphicsEngine) project(t *oldTriangle) {
 	z0 := t[0].Point.Z
 	z1 := t[1].Point.Z
 	z2 := t[2].Point.Z
@@ -327,14 +327,14 @@ func (engine ZBufferGraphicsEngine) project(t *triangle) {
 	t[2].Point.Z = z2
 }
 
-func (engine ZBufferGraphicsEngine) clipScreenEdges(t *triangle) ([]triangle, int) {
+func (engine ZBufferGraphicsEngine) clipScreenEdges(t *oldTriangle) ([]oldTriangle, int) {
 	height := engine.Cnv.height()
 	width := engine.Cnv.width()
 
-	listTriangles := make([]triangle, 10)
+	listTriangles := make([]oldTriangle, 10)
 	listTriangles[0] = makeTriangle(t[0], t[1], t[2])
 	count := 1
-	var clipped [2]triangle
+	var clipped [2]oldTriangle
 
 	for p := 0; p < 4; p++ {
 		trisToAdd := 0
@@ -363,7 +363,7 @@ func (engine ZBufferGraphicsEngine) clipScreenEdges(t *triangle) ([]triangle, in
 	return listTriangles, count
 }
 
-func (engine ZBufferGraphicsEngine) rasterize(t triangle, clr color.NRGBA) {
+func (engine ZBufferGraphicsEngine) rasterize(t oldTriangle, clr color.NRGBA) {
 	if t[0].Point.Y > t[1].Point.Y {
 		t[0], t[1] = t[1], t[0]
 	}
@@ -506,7 +506,7 @@ func (engine ZBufferGraphicsEngine) rasterize(t triangle, clr color.NRGBA) {
 	}
 }
 
-func (engine ZBufferGraphicsEngine) shadowMap(t triangle, clr color.NRGBA) {
+func (engine ZBufferGraphicsEngine) shadowMap(t oldTriangle, clr color.NRGBA) {
 	if t[0].Point.Y > t[1].Point.Y {
 		t[0], t[1] = t[1], t[0]
 	}
