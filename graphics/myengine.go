@@ -122,11 +122,16 @@ func (engine MyGrEngine) assembleTriangles(processed []Vertex, indices []int) {
 
 	fmt.Println(len(processed))
 	for i := 0; i < end; i++ {
-		v0 := processed[indices[i*3]]
-		v1 := processed[indices[i*3+1]]
-		v2 := processed[indices[i*3+2]]
+		if indices[i*3] < len(processed) && indices[i*3+1] < len(processed) && indices[i*3+2] < len(processed) {
+			v0 := processed[indices[i*3]]
+			v1 := processed[indices[i*3+1]]
+			v2 := processed[indices[i*3+2]]
 
-		engine.processTriangle(v0, v1, v2)
+			engine.processTriangle(v0, v1, v2)
+		} else {
+			fmt.Println(indices[i*3], indices[i*3+1], indices[i*3+2])
+		}
+		
 	}
 }
 

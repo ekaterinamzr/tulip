@@ -68,30 +68,6 @@ func main() {
 	scn.SetCamera(cam)
 
 	w.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
-		if k.Name == "H" {
-			scn.LightSource.Pos.X += 1
-			scn.LightSource.Direction = mymath.Vec3Diff(mymath.MakeVec3(0, 0, 0), scn.LightSource.Pos)
-			scn.LightSource.Direction.Normalize()
-		}
-		if k.Name == "F" {
-			scn.LightSource.Pos.X -= 1
-		}
-		if k.Name == "I" {
-			scn.LightSource.Pos.Y += 1
-		}
-		if k.Name == "K" {
-			scn.LightSource.Pos.Y -= 1
-		}
-
-		if k.Name == "T" {
-			scn.LightSource.Pos.Add(scn.Camera.VForward)
-		}
-		if k.Name == "G" {
-			scn.LightSource.Pos.Sub(scn.Camera.VForward)
-		}
-	})
-
-	w.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
 		if k.Name == "Right" {
 			scn.Camera.VCamera.X += 1
 		}
@@ -146,7 +122,7 @@ func main() {
 	// })
 
 	go func() {
-		for i := 0; i < 1000; i++ {
+		for i := 0; i < 100; i++ {
 			time.Sleep(time.Millisecond * delay)
 
 			// engine.RenderScene(&scn, true, true)

@@ -24,16 +24,17 @@ func (c CompositeModel) IsComposit() bool{
 func (c CompositeModel) GetVertices() ([]Vertex, []int){
 	allVertices := make([]Vertex, 0, 1000)
 	allIndices := make([]int, 0, 1000 * 3)
+	verticesLen := 0
 	
 	for i := range(c.Components) {
 		vertices, indices := c.Components[i].GetVertices()
 
-		verticesLen := len(vertices)
 		allVertices = append(allVertices, vertices...)
 
 		for j := range(indices) {
 			allIndices = append(allIndices, indices[j] + verticesLen)
 		}
+		verticesLen = len(vertices)
 	}
 
 	return allVertices, allIndices

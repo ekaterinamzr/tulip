@@ -78,7 +78,8 @@ func MakeLeaf(clr color.NRGBA) scene.Model {
 	half1.Vertices[1].Normal = mymath.MakeVec4(0, 0, -1)
 	half1.Vertices[2].Normal = mymath.MakeVec4(0, 0, -1)
 
-	half1.Polygons = append(half1.Polygons, scene.Polygon{0, 1, 2, clr})
+	// half1.Polygons = append(half1.Polygons, scene.Polygon{0, 1, 2, clr})
+	half1.AddPolygon(0, 1, 2, clr)
 
 	half2.AddPoint(mymath.MakeVec4(0, 0, 0))
 	half2.AddPoint(mymath.MakeVec4(5, 10, 0))
@@ -88,7 +89,8 @@ func MakeLeaf(clr color.NRGBA) scene.Model {
 	half2.Vertices[1].Normal = mymath.MakeVec4(0, 0, 1)
 	half2.Vertices[2].Normal = mymath.MakeVec4(0, 0, 1)
 
-	half2.Polygons = append(half1.Polygons, scene.Polygon{0, 1, 2, clr})
+	// half2.Polygons = append(half1.Polygons, scene.Polygon{0, 1, 2, clr})
+	half2.AddPolygon(0, 1, 2, clr)
 
 	half2.Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, 120, 0))
 
@@ -101,7 +103,9 @@ func MakeLeaf(clr color.NRGBA) scene.Model {
 	leaf.Vertices = append(leaf.Vertices, half1.Vertices...)
 	leaf.Vertices = append(leaf.Vertices, half2.Vertices[1])
 
-	leaf.Polygons = append(leaf.Polygons, scene.Polygon{0, 1, 2, clr}, scene.Polygon{0, 2, 3, clr})
+	// leaf.Polygons = append(leaf.Polygons, scene.Polygon{0, 1, 2, clr}, scene.Polygon{0, 2, 3, clr})
+	leaf.AddPolygon(0, 1, 2, clr)
+	leaf.AddPolygon(0, 2, 3, clr)
 
 	half3.AddPoint(mymath.MakeVec4(0, 0, 0))
 	half3.AddPoint(mymath.MakeVec4(5, 10, 0))
@@ -113,8 +117,11 @@ func MakeLeaf(clr color.NRGBA) scene.Model {
 	half3.Vertices[2].Normal = mymath.MakeVec4(0, 0, 1)
 	half3.Vertices[3].Normal = mymath.MakeVec4(0, 0, 1)
 
-	half3.Polygons = append(half3.Polygons, scene.Polygon{0, 1, 3, clr})
-	half3.Polygons = append(half3.Polygons, scene.Polygon{1, 2, 3, clr})
+	// half3.Polygons = append(half3.Polygons, scene.Polygon{0, 1, 3, clr})
+	// half3.Polygons = append(half3.Polygons, scene.Polygon{1, 2, 3, clr})
+	half3.AddPolygon(0, 1, 3, clr)
+	half3.AddPolygon(0, 2, 3, clr)
+
 
 	half4.AddPoint(mymath.MakeVec4(0, 0, 0))
 	half4.AddPoint(mymath.MakeVec4(5, 10, 0))
@@ -126,8 +133,11 @@ func MakeLeaf(clr color.NRGBA) scene.Model {
 	half4.Vertices[2].Normal = mymath.MakeVec4(0, 0, -1)
 	half4.Vertices[3].Normal = mymath.MakeVec4(0, 0, -1)
 
-	half4.Polygons = append(half4.Polygons, scene.Polygon{0, 1, 2, clr})
-	half4.Polygons = append(half4.Polygons, scene.Polygon{1, 2, 3, clr})
+	// half4.Polygons = append(half4.Polygons, scene.Polygon{0, 1, 2, clr})
+	// half4.Polygons = append(half4.Polygons, scene.Polygon{1, 2, 3, clr})
+
+	half4.AddPolygon(0, 1, 2, clr)
+	half4.AddPolygon(1, 2, 3, clr)
 
 	half4.Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, 120, 0))
 
@@ -142,7 +152,11 @@ func MakeLeaf(clr color.NRGBA) scene.Model {
 	leaf.Vertices = append(leaf.Vertices, half3.Vertices...)
 	leaf.Vertices = append(leaf.Vertices, half4.Vertices[1])
 
-	leaf.Polygons = append(leaf.Polygons, scene.Polygon{4, 5, 7, clr}, scene.Polygon{5, 6, 7, clr}, scene.Polygon{4, 7, 8, clr}, scene.Polygon{7, 2, 8, clr})
+	// leaf.Polygons = append(leaf.Polygons, scene.Polygon{4, 5, 7, clr}, scene.Polygon{5, 6, 7, clr}, scene.Polygon{4, 7, 8, clr}, scene.Polygon{7, 2, 8, clr})
+	leaf.AddPolygon(4, 5, 7, clr)
+	leaf.AddPolygon(5, 6, 7, clr)
+	leaf.AddPolygon(4, 7, 8 ,clr)
+	leaf.AddPolygon(7, 2, 8 ,clr)
 
 	leaf.Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, -60, 0))
 
@@ -219,7 +233,8 @@ func MakePetal(curve mymath.BezierCurve, m, n int, clr color.NRGBA) scene.Model 
 		n := len(petal.Vertices)
 
 		petal.Vertices = append(petal.Vertices, v1, v2, v3)
-		petal.Polygons = append(petal.Polygons, scene.Polygon{n, n + 1, n + 2, clr})
+		//petal.Polygons = append(petal.Polygons, scene.Polygon{n, n + 1, n + 2, clr})
+		petal.AddPolygon(n, n+1, n+2, clr)
 	}
 
 	return petal
@@ -268,37 +283,37 @@ func NewTulip(clr color.NRGBA, pos mymath.Vec3, stage int, k float64) *Tulip {
 	t.stemLen = 30
 	t.stemLen *= k
 
-	// if stage == 1 {
-	// 	t.MakePetals(t.stage1)
-	// } else {
-	// 	t.MakePetals(t.stage2)
-	// }
+	if stage == 1 {
+		t.MakePetals(t.stage1)
+	} else {
+		t.MakePetals(t.stage2)
+	}
 
 	// Stem
-	stem := MakeStem(t.stemLen, 1, 10, 10, color.NRGBA{0, 200, 25, 255})
+	stem := MakeStem(t.stemLen, 0.5 * k, 10, 10, color.NRGBA{0, 200, 25, 255})
 
 	t.Add(&stem)
 	t.Stem = t.Size() - 1
 
 	t.Components[t.Stem].Move(mymath.MakeVec3(pos.X, pos.Y, pos.Z))
 
-	// leaf1 := MakeLeaf(color.NRGBA{0, 200, 25, 255})
-	// leaf1.Scale(mymath.MakeVec3(0, 0, 0), k)
+	leaf1 := MakeLeaf(color.NRGBA{0, 200, 25, 255})
+	leaf1.Scale(mymath.MakeVec3(0, 0, 0), k)
 
-	// t.Add(&leaf1)
-	// t.Leaves[0] = t.Size() - 1
+	t.Add(&leaf1)
+	t.Leaves[0] = t.Size() - 1
 
-	// t.Components[t.Leaves[0]].Move(mymath.MakeVec3(pos.X, pos.Y, pos.Z))
+	t.Components[t.Leaves[0]].Move(mymath.MakeVec3(pos.X, pos.Y, pos.Z))
 
-	// leaf2 := MakeLeaf(color.NRGBA{0, 200, 25, 255})
-	// leaf2.Scale(mymath.MakeVec3(0, 0, 0), k)
+	leaf2 := MakeLeaf(color.NRGBA{0, 200, 25, 255})
+	leaf2.Scale(mymath.MakeVec3(0, 0, 0), k)
 
-	// leaf2.Reflect(true, false, false)
+	leaf2.Reflect(true, false, false)
 
-	// t.Add(&leaf2)
-	// t.Leaves[1] = t.Size() - 1
+	t.Add(&leaf2)
+	t.Leaves[1] = t.Size() - 1
 
-	// t.Components[t.Leaves[1]].Move(mymath.MakeVec3(pos.X, pos.Y, pos.Z))
+	t.Components[t.Leaves[1]].Move(mymath.MakeVec3(pos.X, pos.Y, pos.Z))
 
 	return t
 }
