@@ -1,14 +1,11 @@
 package main
 
 import (
-	"image/color"
+
 	// "math"
 	"time"
 	"tulip/flower"
 	"tulip/graphics"
-	"tulip/primitives"
-	"tulip/scene"
-
 	"tulip/mymath"
 
 	"fyne.io/fyne/v2"
@@ -25,72 +22,46 @@ func main() {
 	a := app.New()
 	w := a.NewWindow("Tulip")
 
-
-	pink := color.NRGBA{255, 135, 141, 255}
-	// yellow := color.NRGBA{251, 206, 43, 255}
-	// red := color.NRGBA{226, 34, 46, 255}
-
-	tulip1 := flower.NewTulip(pink, mymath.MakeVec3(0, 0, 0), 1, 0.2)
-	// tulip2 := flower.NewTulip(yellow, mymath.MakeVec3(0.3, -0.5, -0.3), 1, 0.03)
-	//tulip3 := flower.NewTulip(red, mymath.MakeVec3(-20, 0, 220), 1, 2)
-
-	// cube := primitives.NewCube(5, mymath.MakeVec3(0, 0, 0), pink)
-	// cube.Rotate(mymath.MakeVec3(100, 100, 100), mymath.MakeVec3(3, 3, 3))
-
 	var delay time.Duration = 50
 
 	cnv := graphics.MakeImageCanvas(height, width)
 	engine := graphics.NewMyGrEngine(cnv)
 
-	var scn scene.Scene
-	scn.SetBackground(color.NRGBA{0, 204, 255, 255})
-	scn.SetGroundClr(color.NRGBA{0, 154, 23, 255})
-	scn.SetGround(mymath.MakeVec3(10, 0, 1))
-	scn.SetLight(1, mymath.MakeVec3(10, 10, -10), mymath.MakeVec3(0, 0, 1))
-	scn.LightSource.Direction = mymath.Vec3Diff(mymath.MakeVec3(0, 0, 0), scn.LightSource.Pos)
-	scn.LightSource.Direction.Normalize()
-
-	ground := primitives.NewBlock(10, 1, 10, mymath.MakeVec3(0, -0.5, 0), scn.GroundClr)
-	scn.Add(*ground)
-	scn.Add(tulip1.Components...)
-
-	cam := scene.MakeCamera(mymath.MakeVec3(0, 0, -10))
-	scn.SetCamera(cam)
+	meadow := flower.NewTulipScene()
 
 	w.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
 		if k.Name == "Right" {
-			scn.Camera.VCamera.X += 1
+			meadow.MoveCamera(mymath.MakeVec3(1, 0, 0))
 		}
 		if k.Name == "Left" {
-			scn.Camera.VCamera.X -= 1
+			meadow.MoveCamera(mymath.MakeVec3(-1, 0, 0))
 		}
 		if k.Name == "Up" {
-			scn.Camera.VCamera.Y += 1
+			meadow.MoveCamera(mymath.MakeVec3(0, 1, 0))
 		}
 		if k.Name == "Down" {
-			scn.Camera.VCamera.Y -= 1
+			meadow.MoveCamera(mymath.MakeVec3(0, -1, 0))
 		}
 
 		if k.Name == "W" {
-			scn.Camera.VCamera.Add(scn.Camera.VForward)
+			meadow.MoveCameraForward()
 		}
 		if k.Name == "S" {
-			scn.Camera.VCamera.Sub(scn.Camera.VForward)
+			meadow.MoveCameraBackward()
 		}
 		if k.Name == "A" {
-			scn.Camera.FYaw += 0.1
+			meadow.RotateCameraLeft()
 		}
 		if k.Name == "D" {
-			scn.Camera.FYaw -= 0.1
+			meadow.RotateCameraRight()
 		}
 	})
-
 
 	go func() {
 		for i := 0; i < 1000; i++ {
 			time.Sleep(time.Millisecond * delay)
 
-			engine.RenderScene(&scn)
+			engine.RenderScene(&meadow.Scene)
 			rast := canvas.NewRasterFromImage(cnv.Image())
 			w.SetContent(rast)
 
@@ -114,10 +85,6 @@ func main() {
 	}()
 
 	w.Resize(fyne.NewSize(width, height))
-
 	w.ShowAndRun()
 
-	// ws.Resize(fyne.NewSize(width, height))
-
-	// ws.ShowAndRun()
 }
