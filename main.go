@@ -65,6 +65,9 @@ func main() {
 			rast := canvas.NewRasterFromImage(cnv.Image())
 			w.SetContent(rast)
 
+			meadow.MoveSun()
+			// meadow.Animate(float64(i) / 100)
+
 			// scn.Objects[0].Animate(math.Abs(graphics.Intensity(mymath.MakeVec3(0, -1, 0), scn.LightSource)) / 0.6)
 			//scn.Objects[1].Animate(math.Abs(scn.VectorIntensity(mymath.MakeVec3(0, -1, 0), scn.LightSource)) / 0.6)
 			// scn.Objects[2].Animate(math.Abs(scene.VectorIntensity(mymath.MakeVec3(0, -1, 0), scn.LightSource)) / 0.6)

@@ -6,7 +6,7 @@ import (
 )
 
 type Scene struct {
-	Objects     []Model
+	Objects     []*Model
 	LightSource Light
 
 	Camera Camera
@@ -16,11 +16,16 @@ type Scene struct {
 	// GroundClr  color.NRGBA
 }
 
-func (scn *Scene) Add(m... Model) {
+func (scn *Scene) AddModel(m... *Model) {
 	for i := range(m) {
 		scn.Objects = append(scn.Objects, m[i])
 	}
-	
+}
+
+func (scn *Scene) AddComposite(c []Model) {
+	for i := range(c) {
+		scn.Objects = append(scn.Objects, &c[i])
+	}
 }
 
 func (scn *Scene) SetLight(intensity float64, pos, dir mymath.Vec3) {

@@ -95,7 +95,7 @@ func (engine MyGrEngine) RenderScene(scn *scene.Scene) {
 	engine.initZBuf()
 
 	for i := range scn.Objects {
-		engine.renderModel(scn.Objects[i])
+		engine.renderModel(*scn.Objects[i])
 	}
 }
 

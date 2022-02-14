@@ -19,3 +19,17 @@ func NewLight(intensity float64, pos, direction mymath.Vec3) *Light {
 
 	return light
 }
+
+func (l Light) NormalIntensity(n mymath.Vec3) float64 {
+	i := l.Intensity * (1) * (float64(mymath.CosAlpha(l.Direction, n)))
+
+	if i > 1 {
+		i = 1
+	}
+
+	if i < 0 {
+		i = 0
+	}
+
+	return i
+}
