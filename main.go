@@ -6,6 +6,7 @@ import (
 	"time"
 	"tulip/flower"
 	"tulip/graphics"
+	"tulip/primitives"
 	"tulip/scene"
 
 	"tulip/mymath"
@@ -23,7 +24,7 @@ const (
 func main() {
 	a := app.New()
 	w := a.NewWindow("Tulip")
-	// ws := a.NewWindow("Tulip shadows")
+
 
 	pink := color.NRGBA{255, 135, 141, 255}
 	// yellow := color.NRGBA{251, 206, 43, 255}
@@ -38,10 +39,6 @@ func main() {
 
 	var delay time.Duration = 50
 
-	// var GrEngine graphics.ZBufferGraphicsEngine
-	// GrEngine.Cnv = graphics.NewImageCanvas(height, width)
-
-	//GrEngine := graphics.MakeZBuffEngine(graphics.MakeImageCanvas(height, width))
 	cnv := graphics.MakeImageCanvas(height, width)
 	engine := graphics.NewMyGrEngine(cnv)
 
@@ -53,16 +50,9 @@ func main() {
 	scn.LightSource.Direction = mymath.Vec3Diff(mymath.MakeVec3(0, 0, 0), scn.LightSource.Pos)
 	scn.LightSource.Direction.Normalize()
 
-	// ground := primitives.NewBlock(10, 1, 10, mymath.MakeVec3(0, -3, 0), scn.GroundClr)
-	// scn.AddObject(ground)
-	scn.AddObject(tulip1)
-	// scn.AddObject(tulip2)
-	// scn.AddObject(cube)
-	//scn.AddObject(tulip2)
-	//scn.AddObject(tulip3)
-
-	// scn.LightSource.Direction = mymath.Vec3Diff(mymath.MakeVec3(0, 0, 0), scn.LightSource.Pos)
-	// scn.LightSource.Direction.Normalize()
+	ground := primitives.NewBlock(10, 1, 10, mymath.MakeVec3(0, -0.5, 0), scn.GroundClr)
+	scn.Add(*ground)
+	scn.Add(tulip1.Components...)
 
 	cam := scene.MakeCamera(mymath.MakeVec3(0, 0, -10))
 	scn.SetCamera(cam)
@@ -95,47 +85,16 @@ func main() {
 		}
 	})
 
-	// w.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
-	// 	if k.Name == "Right" {
-	// 		scn.Camera.Pos.X += 0.1
-	// 		// scn.Camera.Pos.Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, 3, 0))
-	// 		//scn.Camera.Center.X += 1
-	// 	}
-	// 	if k.Name == "Left" {
-	// 		scn.Camera.Pos.X -= 0.1
-	// 		//scn.Camera.Pos.Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, -3, 0))
-	// 		//scn.Camera.Center.X -= 1
-	// 	}
-	// 	if k.Name == "Up" {
-	// 		scn.Camera.Pos.Y += 0.1
-	// 	}
-	// 	if k.Name == "Down" {
-	// 		scn.Camera.Pos.Y -= 0.1
-	// 	}
-
-	// 	if k.Name == "W" {
-	// 		scn.Camera.Pos.Z += 0.1
-	// 	}
-	// 	if k.Name == "S" {
-	// 		scn.Camera.Pos.Z -= 0.1
-	// 	}
-	// })
 
 	go func() {
-		for i := 0; i < 100; i++ {
+		for i := 0; i < 1000; i++ {
 			time.Sleep(time.Millisecond * delay)
-
-			// engine.RenderScene(&scn, true, true)
-			// rastShadows := canvas.NewRasterFromImage(engine.Image())
-			// ws.SetContent(rastShadows)
 
 			engine.RenderScene(&scn)
 			rast := canvas.NewRasterFromImage(cnv.Image())
 			w.SetContent(rast)
 
-			// scn.Objects[0].Rotate(mymath.MakeVec3(0, 0, 10), mymath.MakeVec3(3, 3, 3))
-
-			// scn.Objects[1].Animate(math.Abs(scene.VectorIntensity(mymath.MakeVec3(0, -1, 0), scn.LightSource)) / 0.6)
+			// scn.Objects[0].Animate(math.Abs(graphics.Intensity(mymath.MakeVec3(0, -1, 0), scn.LightSource)) / 0.6)
 			//scn.Objects[1].Animate(math.Abs(scn.VectorIntensity(mymath.MakeVec3(0, -1, 0), scn.LightSource)) / 0.6)
 			// scn.Objects[2].Animate(math.Abs(scene.VectorIntensity(mymath.MakeVec3(0, -1, 0), scn.LightSource)) / 0.6)
 

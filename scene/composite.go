@@ -5,10 +5,10 @@ import (
 )
 
 type CompositeModel struct {
-	Components []PolygonialModel
+	Components []Model
 }
 
-func (c *CompositeModel) Add(m PolygonialModel) {
+func (c *CompositeModel) Add(m Model) {
 	c.Components = append(c.Components, m)
 }
 
@@ -19,7 +19,6 @@ func (c CompositeModel) Size() int {
 func (c CompositeModel) IsComposit() bool{
 	return true
 }
-
 
 func (c CompositeModel) GetVertices() ([]Vertex, []int){
 	allVertices := make([]Vertex, 0, 1000)
@@ -40,11 +39,11 @@ func (c CompositeModel) GetVertices() ([]Vertex, []int){
 	return allVertices, allIndices
 }
 
-func (c CompositeModel) IterateOverPolygons(f PolygonialFunc) {
-	for i := range c.Components {
-		c.Components[i].IterateOverPolygons(f)
-	}
-}
+// func (c CompositeModel) IterateOverPolygons(f PolygonialFunc) {
+// 	for i := range c.Components {
+// 		c.Components[i].IterateOverPolygons(f)
+// 	}
+// }
 
 func (c *CompositeModel) Scale(center mymath.Vec3, k float64) {
 	for i := range c.Components {

@@ -6,18 +6,21 @@ import (
 )
 
 type Scene struct {
-	Objects     []PolygonialModel
+	Objects     []Model
 	LightSource Light
 
 	Camera Camera
 
 	Background color.NRGBA
-	Ground     PolygonialModel
+	Ground     Model
 	GroundClr  color.NRGBA
 }
 
-func (scn *Scene) AddObject(obj PolygonialModel) {
-	scn.Objects = append(scn.Objects, obj)
+func (scn *Scene) Add(m... Model) {
+	for i := range(m) {
+		scn.Objects = append(scn.Objects, m[i])
+	}
+	
 }
 
 func (scn *Scene) SetLight(intensity float64, pos, dir mymath.Vec3) {
@@ -65,5 +68,5 @@ func (scn *Scene) SetGround(g mymath.Vec3) {
 
 	ground.Move(mymath.MakeVec3(0, 0, 200))
 
-	scn.Ground = &ground
+	scn.Ground = ground
 }

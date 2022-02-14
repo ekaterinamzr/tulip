@@ -9,6 +9,7 @@ import (
 
 type Tulip struct {
 	scene.CompositeModel
+	// Components []scene.Model
 
 	Petals [6]int
 	Leaves [2]int
@@ -23,6 +24,8 @@ type Tulip struct {
 	stage1 mymath.BezierCurve
 	stage2 mymath.BezierCurve
 }
+
+
 
 func MakeStem(h, r float64, n, k int, clr color.NRGBA) scene.Model {
 	var stem scene.Model
@@ -221,21 +224,39 @@ func MakePetal(curve mymath.BezierCurve, m, n int, clr color.NRGBA) scene.Model 
 		}
 	}
 
-	for i := range petal.Polygons {
-		v1 := petal.Vertices[petal.Polygons[i].V1]
-		v2 := petal.Vertices[petal.Polygons[i].V2]
-		v3 := petal.Vertices[petal.Polygons[i].V3]
+	end := len(petal.Indices) / 3
+	for i := 0; i < end; i++ {
+		// if petal.Indices[i*3] < len(petal.Vertices) && petal.Indices[i*3+1] < len(petal.Vertices) && petal.Indices[i*3+2] < len(petal.Vertices) {
+		v0 := petal.Vertices[petal.Indices[i*3]]
+		v1 := petal.Vertices[petal.Indices[i*3+1]]
+		v2 := petal.Vertices[petal.Indices[i*3+2]]
 
+		v0.Reflect(false, false, true)
 		v1.Reflect(false, false, true)
 		v2.Reflect(false, false, true)
-		v3.Reflect(false, false, true)
 
 		n := len(petal.Vertices)
-
-		petal.Vertices = append(petal.Vertices, v1, v2, v3)
-		//petal.Polygons = append(petal.Polygons, scene.Polygon{n, n + 1, n + 2, clr})
+		petal.Vertices = append(petal.Vertices, v0, v1, v2)
 		petal.AddPolygon(n, n+1, n+2, clr)
+
 	}
+
+
+	// for i := range petal.Polygons {
+	// 	v1 := petal.Vertices[petal.Polygons[i].V1]
+	// 	v2 := petal.Vertices[petal.Polygons[i].V2]
+	// 	v3 := petal.Vertices[petal.Polygons[i].V3]
+
+	// 	v1.Reflect(false, false, true)
+	// 	v2.Reflect(false, false, true)
+	// 	v3.Reflect(false, false, true)
+
+	// 	n := len(petal.Vertices)
+
+	// 	petal.Vertices = append(petal.Vertices, v1, v2, v3)
+	// 	//petal.Polygons = append(petal.Polygons, scene.Polygon{n, n + 1, n + 2, clr})
+	// 	petal.AddPolygon(n, n+1, n+2, clr)
+	// }
 
 	return petal
 }
@@ -245,7 +266,7 @@ func (t *Tulip) MakePetals(stage mymath.BezierCurve) {
 
 		petal := MakePetal(stage, 10, 10, t.clr)
 
-		t.Add(&petal)
+		t.Add(petal)
 		t.Petals[i] = t.Size() - 1
 		t.Components[t.Petals[i]].Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, 120*float64(i), 0))
 
@@ -292,7 +313,7 @@ func NewTulip(clr color.NRGBA, pos mymath.Vec3, stage int, k float64) *Tulip {
 	// Stem
 	stem := MakeStem(t.stemLen, 0.5 * k, 10, 10, color.NRGBA{0, 200, 25, 255})
 
-	t.Add(&stem)
+	t.Add(stem)
 	t.Stem = t.Size() - 1
 
 	t.Components[t.Stem].Move(mymath.MakeVec3(pos.X, pos.Y, pos.Z))
@@ -300,7 +321,7 @@ func NewTulip(clr color.NRGBA, pos mymath.Vec3, stage int, k float64) *Tulip {
 	leaf1 := MakeLeaf(color.NRGBA{0, 200, 25, 255})
 	leaf1.Scale(mymath.MakeVec3(0, 0, 0), k)
 
-	t.Add(&leaf1)
+	t.Add(leaf1)
 	t.Leaves[0] = t.Size() - 1
 
 	t.Components[t.Leaves[0]].Move(mymath.MakeVec3(pos.X, pos.Y, pos.Z))
@@ -310,7 +331,7 @@ func NewTulip(clr color.NRGBA, pos mymath.Vec3, stage int, k float64) *Tulip {
 
 	leaf2.Reflect(true, false, false)
 
-	t.Add(&leaf2)
+	t.Add(leaf2)
 	t.Leaves[1] = t.Size() - 1
 
 	t.Components[t.Leaves[1]].Move(mymath.MakeVec3(pos.X, pos.Y, pos.Z))
@@ -351,7 +372,7 @@ func (t *Tulip) ChangePetals(stage mymath.BezierCurve) {
 
 		petal := MakePetal(stage, 10, 10, t.clr)
 
-		t.Components[t.Petals[i]] = &petal
+		t.Components[t.Petals[i]] = petal
 
 		if i > 2 {
 			//t.Components[t.Petals[i]].Move(mymath.MakeVec3(1, 0, 0))
@@ -379,7 +400,7 @@ func (t *Tulip) ChangePetalsNew(stageIn, stageOut mymath.BezierCurve) {
 
 		petal := MakePetal(stageOut, 10, 10, t.clr)
 
-		t.Components[t.Petals[i]] = &petal
+		t.Components[t.Petals[i]] = petal
 		//t.Components[t.Petals[i]].Move(mymath.MakeVec3(1, 0, 0))
 
 		t.Components[t.Petals[i]].Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, 120*float64(i), 0))
@@ -391,7 +412,7 @@ func (t *Tulip) ChangePetalsNew(stageIn, stageOut mymath.BezierCurve) {
 
 		petal := MakePetal(stageIn, 10, 10, t.clr)
 
-		t.Components[t.Petals[i]] = &petal
+		t.Components[t.Petals[i]] = petal
 
 		t.Components[t.Petals[i]].Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, 120*float64(i)+60, 0))
 

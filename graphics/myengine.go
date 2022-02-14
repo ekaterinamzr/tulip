@@ -101,7 +101,7 @@ func (engine MyGrEngine) RenderScene(scn *scene.Scene) {
 
 // extracting vertices and indices in a slice form
 // TODO: change the model structure
-func (engine MyGrEngine) renderModel(m scene.PolygonialModel) {
+func (engine MyGrEngine) renderModel(m scene.Model) {
 	vertices, indices := m.GetVertices()
 	engine.processVertices(vertices, indices)
 }
@@ -120,7 +120,7 @@ func (engine MyGrEngine) processVertices(vertices []scene.Vertex, indices []int)
 func (engine MyGrEngine) assembleTriangles(processed []Vertex, indices []int) {
 	end := len(indices) / 3
 
-	fmt.Println(len(processed))
+	// fmt.Println(len(processed))
 	for i := 0; i < end; i++ {
 		if indices[i*3] < len(processed) && indices[i*3+1] < len(processed) && indices[i*3+2] < len(processed) {
 			v0 := processed[indices[i*3]]
