@@ -47,6 +47,10 @@ func makeGouraudShader(view, proj, lViewProj mymath.Matrix4x4, sBuf [][]float64,
 }
 
 func intensity(n mymath.Vec3, l scene.Light) float64 {
+	if l.Intensity < 0 {
+		return 0
+	}
+
 	i := l.Intensity * (1) * (float64(mymath.CosAlpha(l.Direction, n)))
 
 	if i > 1 {
@@ -73,7 +77,7 @@ func (g gouraudShader) vs(v scene.Vertex) Vertex {
 	return vS
 }
 
-func lightness(clr color.NRGBA, intensity float64) color.NRGBA {
+func Tint(clr color.NRGBA, intensity float64) color.NRGBA {
 	if intensity > 1 || intensity < 0 {
 		return clr
 	}
@@ -81,6 +85,18 @@ func lightness(clr color.NRGBA, intensity float64) color.NRGBA {
 	r := clr.R + uint8(float64((255-clr.R))*intensity)
 	g := clr.G + uint8(float64((255-clr.G))*intensity)
 	b := clr.B + uint8(float64((255-clr.B))*intensity)
+
+	return color.NRGBA{r, g, b, 255}
+}
+
+func Shade(clr color.NRGBA, intensity float64) color.NRGBA {
+	if intensity > 1 || intensity < 0 {
+		return clr
+	}
+
+	r := uint8(float64(clr.R) * (1.0-intensity))
+	g := uint8(float64(clr.G) * (1.0-intensity))
+	b := uint8(float64(clr.B) * (1.0-intensity))
 
 	return color.NRGBA{r, g, b, 255}
 }
@@ -96,7 +112,8 @@ func (g gouraudShader) ps(v Vertex, clr color.NRGBA) (int, int, color.NRGBA) {
 	// lpx := int(math.Round(lightPoint.X))
 	// lpy := int(math.Round(lightPoint.Y))
 
-	pixelClr := lightness(clr, v.Intensity)
+	clr = Shade(clr, 0.5 - g.light.Intensity)
+	pixelClr := Tint(clr, v.Intensity)
 
 	// if idx < len(g.sBuf) && idx >= 0 && lightPoint.Z > g.sBuf[idx]+0.0006 {
 	// 	fmt.Println(lightPoint.Z, g.sBuf[idx])

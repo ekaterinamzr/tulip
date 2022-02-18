@@ -103,6 +103,7 @@ func (engine MyGrEngine) RenderScene(scn *scene.Scene) {
 // TODO: change the model structure
 func (engine MyGrEngine) renderModel(m scene.Model) {
 	vertices, indices := m.GetVertices()
+	// engine.processVerticesParallel(vertices, indices, 100)
 	engine.processVertices(vertices, indices)
 }
 
@@ -120,7 +121,6 @@ func (engine MyGrEngine) processVertices(vertices []scene.Vertex, indices []int)
 func (engine MyGrEngine) assembleTriangles(processed []Vertex, indices []int) {
 	end := len(indices) / 3
 
-	// fmt.Println(len(processed))
 	for i := 0; i < end; i++ {
 		if indices[i*3] < len(processed) && indices[i*3+1] < len(processed) && indices[i*3+2] < len(processed) {
 			v0 := processed[indices[i*3]]
@@ -131,7 +131,6 @@ func (engine MyGrEngine) assembleTriangles(processed []Vertex, indices []int) {
 		} else {
 			fmt.Println(indices[i*3], indices[i*3+1], indices[i*3+2])
 		}
-		
 	}
 }
 
@@ -151,17 +150,16 @@ func (engine MyGrEngine) renderTriangle(t triangle) {
 	engine.rasterizeTriangle(t, engine.zBuf)
 	// engine.rasterizeWire(t)
 	// engine.rasterizeNormals(t)
+	// engine.rasterizeVertices(t)
 }
 
 // z-buffer algorithm
-// TODO: refactoring
 func (engine MyGrEngine) rasterizeTriangle(t triangle, buf [][]float64) {
 	clr := t.v0.clr
 	p0, p1, p2 := t.v0.Point, t.v1.Point, t.v2.Point
 	i0, i1, i2 := t.v0.Intensity, t.v1.Intensity, t.v2.Intensity
 	w0, w1, w2 := t.v0.worldPoint, t.v1.worldPoint, t.v2.worldPoint
 
-	print()
 	if p0.Y > p1.Y {
 		p0, p1 = p1, p0
 		i0, i1 = i1, i0
@@ -211,7 +209,7 @@ func (engine MyGrEngine) rasterizeTriangle(t triangle, buf [][]float64) {
 			wa, wb = wb, wa
 		}
 
-		for x := a.X; x <= b.X; x++ {
+		for x := a.X; x <= b.X+4e-1; x++ {
 			var (
 				phi float64
 				p   Vertex
@@ -285,7 +283,7 @@ func (engine MyGrEngine) rasterizeTriangle(t triangle, buf [][]float64) {
 			wa, wb = wb, wa
 		}
 
-		for x := a.X; x <= b.X; x++ {
+		for x := a.X; x <= b.X+4e-1; x++ {
 			var (
 				phi float64
 				p   Vertex
@@ -324,18 +322,6 @@ func (engine MyGrEngine) rasterizeTriangle(t triangle, buf [][]float64) {
 	}
 }
 
-// func makeProjection(w, h, n, f float64) mymath.Matrix4x4 {
-// 	var proj mymath.Matrix4x4
-
-// 	proj[0][0] = 2.0 * n / w
-// 	proj[1][1] = 2.0 * n / h
-// 	proj[2][2] = f / (f - n)
-// 	proj[3][2] = -n * f / (f - n)
-// 	proj[2][3] = 1.0
-
-// 	return proj
-// }
-
 func (engine MyGrEngine) rasterizeWire(t triangle) {
 	h := engine.cnv.height()
 	x0, y0 := point2pixel(h, t.v0.Point.Vec3)
@@ -345,6 +331,17 @@ func (engine MyGrEngine) rasterizeWire(t triangle) {
 	engine.cnv.drawLine(x0, y0, x1, y1, color.Black)
 	engine.cnv.drawLine(x1, y1, x2, y2, color.Black)
 	engine.cnv.drawLine(x0, y0, x2, y2, color.Black)
+}
+
+func (engine MyGrEngine) rasterizeVertices(t triangle) {
+	h := engine.cnv.height()
+	x0, y0 := point2pixel(h, t.v0.Point.Vec3)
+	x1, y1 := point2pixel(h, t.v1.Point.Vec3)
+	x2, y2 := point2pixel(h, t.v2.Point.Vec3)
+
+	engine.cnv.drawLine(x0, y0, x0, y0, color.Black)
+	engine.cnv.drawLine(x1, y1, x1, y1, color.Black)
+	engine.cnv.drawLine(x2, y2, x2, y2, color.Black)
 }
 
 func (engine MyGrEngine) rasterizeNormals(t triangle) {
@@ -373,5 +370,5 @@ func (engine MyGrEngine) rasterizeNormals(t triangle) {
 }
 
 func point2pixel(h int, v mymath.Vec3) (int, int) {
-	return int(v.X), h - int(v.Y)
+	return int(v.X), int(v.Y)
 }

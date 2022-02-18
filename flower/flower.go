@@ -25,8 +25,6 @@ type Tulip struct {
 	stage2 mymath.BezierCurve
 }
 
-
-
 func MakeStem(h, r float64, n, k int, clr color.NRGBA) scene.Model {
 	var stem scene.Model
 
@@ -57,12 +55,11 @@ func MakeStem(h, r float64, n, k int, clr color.NRGBA) scene.Model {
 		// p1 := scene.Polygon{i, i/k*k + (i+1)%k, i/k*k + (i+1)%k + k, clr}
 		// p2 := scene.Polygon{i, i + k, i/k*k + (i+1)%k + k, clr}
 
-		stem.AddPolygon(i, i/k*k + (i+1)%k, i/k*k + (i+1)%k + k, clr)
-		stem.AddPolygon(i, i + k, i/k*k + (i+1)%k + k, clr)
+		stem.AddPolygon(i, i/k*k+(i+1)%k, i/k*k+(i+1)%k+k, clr)
+		stem.AddPolygon(i, i+k, i/k*k+(i+1)%k+k, clr)
 		// stem.Polygons = append(stem.Polygons, p1)
 		// stem.Polygons = append(stem.Polygons, p2)
 	}
-
 
 	return stem
 
@@ -120,7 +117,6 @@ func MakeLeaf(clr color.NRGBA) scene.Model {
 	half3.AddPolygon(0, 1, 3, clr)
 	half3.AddPolygon(0, 2, 3, clr)
 
-
 	half4.AddPoint(mymath.MakeVec4(0, 0, 0))
 	half4.AddPoint(mymath.MakeVec4(5, 10, 0))
 	half4.AddPoint(mymath.MakeVec4(0, 30, 0))
@@ -149,8 +145,8 @@ func MakeLeaf(clr color.NRGBA) scene.Model {
 
 	leaf.AddPolygon(4, 5, 7, clr)
 	leaf.AddPolygon(5, 6, 7, clr)
-	leaf.AddPolygon(4, 7, 8 ,clr)
-	leaf.AddPolygon(7, 2, 8 ,clr)
+	leaf.AddPolygon(4, 7, 8, clr)
+	leaf.AddPolygon(7, 2, 8, clr)
 
 	leaf.Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, -60, 0))
 
@@ -208,7 +204,7 @@ func MakePetal(curve mymath.BezierCurve, m, n int, clr color.NRGBA) scene.Model 
 			v1 := (m+1)*j + i
 			v2 := (m+1)*(j+1) + i
 			v3 := (m+1)*(j+1) + i + 1
-			v4 := (m+1)*j + i + i
+			v4 := (m+1)*j + i + 1
 
 			petal.AddPolygon(v1, v2, v3, clr)
 			petal.AddPolygon(v3, v4, v1, clr)
@@ -252,7 +248,7 @@ func (t *Tulip) MakePetals(stage mymath.BezierCurve) {
 
 }
 
-func NewTulip(clr color.NRGBA, pos mymath.Vec3, k float64) *Tulip {
+func NewTulip(clr color.NRGBA, pos mymath.Vec3, k, x1, x2, x3 float64) *Tulip {
 	t := new(Tulip)
 
 	t.pos = pos
@@ -265,9 +261,13 @@ func NewTulip(clr color.NRGBA, pos mymath.Vec3, k float64) *Tulip {
 	t.stage1[3] = mymath.MakeVec3(0, 10, 0)
 
 	t.stage2[0] = mymath.MakeVec3(0, 0, 0)
-	t.stage2[1] = mymath.MakeVec3(6, 0, 0)
-	t.stage2[2] = mymath.MakeVec3(6, 8, 0)
-	t.stage2[3] = mymath.MakeVec3(5, 10.907, 0)
+	t.stage2[1] = mymath.MakeVec3(x1, 0, 0)
+	t.stage2[2] = mymath.MakeVec3(x2, 8, 0)
+	t.stage2[3] = mymath.MakeVec3(x3, 10.907, 0)
+	// t.stage2[0] = mymath.MakeVec3(0, 0, 0)
+	// t.stage2[1] = mymath.MakeVec3(6, 0, 0)
+	// t.stage2[2] = mymath.MakeVec3(6, 8, 0)
+	// t.stage2[3] = mymath.MakeVec3(5, 10.907, 0)
 
 	for i := range t.stage1 {
 		t.stage1[i].Scale(mymath.MakeVec3(0, 0, 0), k)
@@ -281,7 +281,7 @@ func NewTulip(clr color.NRGBA, pos mymath.Vec3, k float64) *Tulip {
 	t.MakePetals(t.stage1)
 
 	// Stem
-	stem := MakeStem(t.stemLen, 0.5 * k, 10, 10, color.NRGBA{0, 200, 25, 255})
+	stem := MakeStem(t.stemLen, 0.5*k, 10, 10, color.NRGBA{0, 200, 25, 255})
 
 	t.Add(stem)
 	t.Stem = t.Size() - 1
@@ -330,18 +330,29 @@ func (t *Tulip) Scale(center mymath.Vec3, k float64) {
 }
 
 func (t *Tulip) ChangePetals(stage mymath.BezierCurve) {
+	for i := range t.Petals {
 
-	var clrs [6]color.NRGBA
-	clrs[0] = color.NRGBA{255, 0, 0, 255}
-	clrs[1] = color.NRGBA{0, 255, 0, 255}
-	clrs[2] = color.NRGBA{0, 0, 255, 255}
-	clrs[3] = color.NRGBA{255, 255, 0, 255}
-	clrs[4] = color.NRGBA{255, 0, 255, 255}
-	clrs[5] = color.NRGBA{0, 255, 255, 255}
+		petal := MakePetal(stage, 20, 20, t.clr)
+
+		t.Components[t.Petals[i]] = petal
+
+		if i > 2 {
+			t.Components[t.Petals[i]].Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, 60, 0))
+		}
+
+		t.Components[t.Petals[i]].Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, 120*float64(i), 0))
+
+		t.Components[t.Petals[i]].Move(mymath.MakeVec3(t.pos.X, t.pos.Y+t.stemLen, t.pos.Z))
+	}
+
+}
+
+func (t *Tulip) ChangePetalsRotate(stage mymath.BezierCurve, angle float64) {
 
 	for i := range t.Petals {
 
 		petal := MakePetal(stage, 10, 10, t.clr)
+		petal.Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, 0, angle))
 
 		t.Components[t.Petals[i]] = petal
 
@@ -412,7 +423,7 @@ func (t *Tulip) OpenPetals(k float64) {
 	stage[2] = t.interpolateStagePoint(2, k)
 	stage[3] = t.interpolateStagePoint(3, k)
 
-	t.ChangePetals(stage)
+	t.ChangePetalsRotate(stage, k*45.0)
 }
 
 func (t *Tulip) OpenPetalsNew(k float64) {

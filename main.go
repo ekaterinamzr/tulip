@@ -3,6 +3,7 @@ package main
 import (
 
 	// "math"
+
 	"time"
 	"tulip/flower"
 	"tulip/graphics"
@@ -11,11 +12,14 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/widget"
 )
 
 const (
-	width  = 500
-	height = 500
+	width  = 800
+	height = 800
 )
 
 func main() {
@@ -27,7 +31,29 @@ func main() {
 	cnv := graphics.MakeImageCanvas(height, width)
 	engine := graphics.NewMyGrEngine(cnv)
 
-	meadow := flower.NewTulipScene()
+	info := widget.NewLabel("Управление камерой: \n^ - вверх\nv - вниз\n> - вправо\n< - влево\nW - вперед\nS - назад\nD - поворот вправо\nA - поворот влево")
+	infoBezier := widget.NewLabel("Модель открытого лепестка:\nМодель открытого\nлепестка строится на\nоснове кривой Безье\nс контрольными точками:\n(0, 0), (x1, 0), (x2, 8), (x3, 11).\nЗначения x1, x2, x3\nможно изменить, используя\nсоответствующие ползунки:\n")
+	x1 := widget.NewLabel("x1")
+	x2 := widget.NewLabel("x2")
+	x3 := widget.NewLabel("x3")
+	r := widget.NewLabel("0                                              15")
+	slider1 := widget.NewSlider(0.0, 15.0)
+	slider2 := widget.NewSlider(0.0, 15.0)
+	slider3 := widget.NewSlider(0.0, 15.0)
+
+	slider1.Value = 6
+	slider2.Value = 6
+	slider3.Value = 5
+
+	meadow := flower.NewTulipScene(slider1.Value, slider2.Value, slider3.Value)
+	// meadow := flower.NewTriangleScene()
+
+	button := widget.NewButton("Сгенерировать сцену", func() {
+		meadow = flower.NewTulipScene(slider1.Value, slider2.Value, slider3.Value)
+	})
+
+	menu := container.New(layout.NewVBoxLayout(), info, infoBezier, x3, slider3, x2, slider2, x1, slider1, r, button)
+	menuColumn := container.New(layout.NewGridWrapLayout(fyne.NewSize(220, height)), menu)
 
 	w.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
 		if k.Name == "Right" {
@@ -58,36 +84,23 @@ func main() {
 	})
 
 	go func() {
-		for i := 0; i < 1000; i++ {
+		for {
 			time.Sleep(time.Millisecond * delay)
 
 			engine.RenderScene(&meadow.Scene)
+
 			rast := canvas.NewRasterFromImage(cnv.Image())
-			w.SetContent(rast)
+
+			img := container.New(layout.NewGridWrapLayout(fyne.NewSize(width, height)), rast)
+			form := container.New(layout.NewFormLayout(), menuColumn, img)
+
+			w.SetContent(form)
 
 			meadow.MoveSun()
-			// meadow.Animate(float64(i) / 100)
 
-			// scn.Objects[0].Animate(math.Abs(graphics.Intensity(mymath.MakeVec3(0, -1, 0), scn.LightSource)) / 0.6)
-			//scn.Objects[1].Animate(math.Abs(scn.VectorIntensity(mymath.MakeVec3(0, -1, 0), scn.LightSource)) / 0.6)
-			// scn.Objects[2].Animate(math.Abs(scene.VectorIntensity(mymath.MakeVec3(0, -1, 0), scn.LightSource)) / 0.6)
-
-			// scn.LightSource.Intensity = -scn.LightSource.Direction.Y * 0.6
-			// scn.SetBackground(scene.Lightness(color.NRGBA{0, 204, 255, 255}, scn.LightSource.Intensity))
-			// scn.LightSource.Pos.Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, 0, 1))
-
-			// scn.LightSource.Direction = mymath.Vec3Diff(mymath.MakeVec3(0, 0, 0), scn.LightSource.Pos)
-			// scn.LightSource.Direction.Normalize()
-
-			// scn.LightSource.Direction.Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, 0, -1))
-			// if scn.LightSource.Pos.Y < 0 {
-			// 	scn.LightSource.Pos.Y = 0
-			// 	scn.LightSource.Pos.X = -10
-			// }
 		}
 	}()
 
-	w.Resize(fyne.NewSize(width, height))
+	w.Resize(fyne.NewSize(width+50, height))
 	w.ShowAndRun()
-
 }
