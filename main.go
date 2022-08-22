@@ -1,164 +1,106 @@
 package main
 
 import (
-	"image/color"
+
 	// "math"
+
 	"time"
 	"tulip/flower"
 	"tulip/graphics"
-	"tulip/scene"
-
 	"tulip/mymath"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/widget"
 )
 
 const (
-	width  = 500
-	height = 500
+	width  = 800
+	height = 800
 )
 
 func main() {
 	a := app.New()
 	w := a.NewWindow("Tulip")
-	// ws := a.NewWindow("Tulip shadows")
-
-	pink := color.NRGBA{255, 135, 141, 255}
-	// yellow := color.NRGBA{251, 206, 43, 255}
-	// red := color.NRGBA{226, 34, 46, 255}
-
-	tulip1 := flower.NewTulip(pink, mymath.MakeVec3(0, 0, 0), 1, 0.2)
-	// tulip2 := flower.NewTulip(yellow, mymath.MakeVec3(0.3, -0.5, -0.3), 1, 0.03)
-	//tulip3 := flower.NewTulip(red, mymath.MakeVec3(-20, 0, 220), 1, 2)
-
-	// cube := primitives.NewCube(5, mymath.MakeVec3(0, 0, 0), pink)
-	// cube.Rotate(mymath.MakeVec3(100, 100, 100), mymath.MakeVec3(3, 3, 3))
 
 	var delay time.Duration = 50
 
-	// var GrEngine graphics.ZBufferGraphicsEngine
-	// GrEngine.Cnv = graphics.NewImageCanvas(height, width)
-
-	//GrEngine := graphics.MakeZBuffEngine(graphics.MakeImageCanvas(height, width))
 	cnv := graphics.MakeImageCanvas(height, width)
 	engine := graphics.NewMyGrEngine(cnv)
 
-	var scn scene.Scene
-	scn.SetBackground(color.NRGBA{0, 204, 255, 255})
-	scn.SetGroundClr(color.NRGBA{0, 154, 23, 255})
-	scn.SetGround(mymath.MakeVec3(10, 0, 1))
-	scn.SetLight(1, mymath.MakeVec3(10, 10, -10), mymath.MakeVec3(0, 0, 1))
-	scn.LightSource.Direction = mymath.Vec3Diff(mymath.MakeVec3(0, 0, 0), scn.LightSource.Pos)
-	scn.LightSource.Direction.Normalize()
+	info := widget.NewLabel("Управление камерой: \n^ - вверх\nv - вниз\n> - вправо\n< - влево\nW - вперед\nS - назад\nD - поворот вправо\nA - поворот влево")
+	infoBezier := widget.NewLabel("Модель открытого лепестка:\nМодель открытого\nлепестка строится на\nоснове кривой Безье\nс контрольными точками:\n(0, 0), (x1, 0), (x2, 8), (x3, 11).\nЗначения x1, x2, x3\nможно изменить, используя\nсоответствующие ползунки:\n")
+	x1 := widget.NewLabel("x1")
+	x2 := widget.NewLabel("x2")
+	x3 := widget.NewLabel("x3")
+	r := widget.NewLabel("0                                              15")
+	slider1 := widget.NewSlider(0.0, 15.0)
+	slider2 := widget.NewSlider(0.0, 15.0)
+	slider3 := widget.NewSlider(0.0, 15.0)
 
-	// ground := primitives.NewBlock(10, 1, 10, mymath.MakeVec3(0, -3, 0), scn.GroundClr)
-	// scn.AddObject(ground)
-	scn.AddObject(tulip1)
-	// scn.AddObject(tulip2)
-	// scn.AddObject(cube)
-	//scn.AddObject(tulip2)
-	//scn.AddObject(tulip3)
+	slider1.Value = 6
+	slider2.Value = 6
+	slider3.Value = 5
 
-	// scn.LightSource.Direction = mymath.Vec3Diff(mymath.MakeVec3(0, 0, 0), scn.LightSource.Pos)
-	// scn.LightSource.Direction.Normalize()
+	meadow := flower.NewTulipScene(slider1.Value, slider2.Value, slider3.Value)
+	// meadow := flower.NewTriangleScene()
 
-	cam := scene.MakeCamera(mymath.MakeVec3(0, 0, -10))
-	scn.SetCamera(cam)
+	button := widget.NewButton("Сгенерировать сцену", func() {
+		meadow = flower.NewTulipScene(slider1.Value, slider2.Value, slider3.Value)
+	})
+
+	menu := container.New(layout.NewVBoxLayout(), info, infoBezier, x3, slider3, x2, slider2, x1, slider1, r, button)
+	menuColumn := container.New(layout.NewGridWrapLayout(fyne.NewSize(220, height)), menu)
 
 	w.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
 		if k.Name == "Right" {
-			scn.Camera.VCamera.X += 1
+			meadow.MoveCamera(mymath.MakeVec3(1, 0, 0))
 		}
 		if k.Name == "Left" {
-			scn.Camera.VCamera.X -= 1
+			meadow.MoveCamera(mymath.MakeVec3(-1, 0, 0))
 		}
 		if k.Name == "Up" {
-			scn.Camera.VCamera.Y += 1
+			meadow.MoveCamera(mymath.MakeVec3(0, 1, 0))
 		}
 		if k.Name == "Down" {
-			scn.Camera.VCamera.Y -= 1
+			meadow.MoveCamera(mymath.MakeVec3(0, -1, 0))
 		}
 
 		if k.Name == "W" {
-			scn.Camera.VCamera.Add(scn.Camera.VForward)
+			meadow.MoveCameraForward()
 		}
 		if k.Name == "S" {
-			scn.Camera.VCamera.Sub(scn.Camera.VForward)
+			meadow.MoveCameraBackward()
 		}
 		if k.Name == "A" {
-			scn.Camera.FYaw += 0.1
+			meadow.RotateCameraLeft()
 		}
 		if k.Name == "D" {
-			scn.Camera.FYaw -= 0.1
+			meadow.RotateCameraRight()
 		}
 	})
 
-	// w.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
-	// 	if k.Name == "Right" {
-	// 		scn.Camera.Pos.X += 0.1
-	// 		// scn.Camera.Pos.Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, 3, 0))
-	// 		//scn.Camera.Center.X += 1
-	// 	}
-	// 	if k.Name == "Left" {
-	// 		scn.Camera.Pos.X -= 0.1
-	// 		//scn.Camera.Pos.Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, -3, 0))
-	// 		//scn.Camera.Center.X -= 1
-	// 	}
-	// 	if k.Name == "Up" {
-	// 		scn.Camera.Pos.Y += 0.1
-	// 	}
-	// 	if k.Name == "Down" {
-	// 		scn.Camera.Pos.Y -= 0.1
-	// 	}
-
-	// 	if k.Name == "W" {
-	// 		scn.Camera.Pos.Z += 0.1
-	// 	}
-	// 	if k.Name == "S" {
-	// 		scn.Camera.Pos.Z -= 0.1
-	// 	}
-	// })
-
 	go func() {
-		for i := 0; i < 100; i++ {
+		for {
 			time.Sleep(time.Millisecond * delay)
 
-			// engine.RenderScene(&scn, true, true)
-			// rastShadows := canvas.NewRasterFromImage(engine.Image())
-			// ws.SetContent(rastShadows)
+			engine.RenderScene(&meadow.Scene)
 
-			engine.RenderScene(&scn)
 			rast := canvas.NewRasterFromImage(cnv.Image())
-			w.SetContent(rast)
 
-			// scn.Objects[0].Rotate(mymath.MakeVec3(0, 0, 10), mymath.MakeVec3(3, 3, 3))
+			img := container.New(layout.NewGridWrapLayout(fyne.NewSize(width, height)), rast)
+			form := container.New(layout.NewFormLayout(), menuColumn, img)
 
-			// scn.Objects[1].Animate(math.Abs(scene.VectorIntensity(mymath.MakeVec3(0, -1, 0), scn.LightSource)) / 0.6)
-			//scn.Objects[1].Animate(math.Abs(scn.VectorIntensity(mymath.MakeVec3(0, -1, 0), scn.LightSource)) / 0.6)
-			// scn.Objects[2].Animate(math.Abs(scene.VectorIntensity(mymath.MakeVec3(0, -1, 0), scn.LightSource)) / 0.6)
+			w.SetContent(form)
 
-			// scn.LightSource.Intensity = -scn.LightSource.Direction.Y * 0.6
-			// scn.SetBackground(scene.Lightness(color.NRGBA{0, 204, 255, 255}, scn.LightSource.Intensity))
-			// scn.LightSource.Pos.Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, 0, 1))
+			meadow.MoveSun()
 
-			// scn.LightSource.Direction = mymath.Vec3Diff(mymath.MakeVec3(0, 0, 0), scn.LightSource.Pos)
-			// scn.LightSource.Direction.Normalize()
-
-			// scn.LightSource.Direction.Rotate(mymath.MakeVec3(0, 0, 0), mymath.MakeVec3(0, 0, -1))
-			// if scn.LightSource.Pos.Y < 0 {
-			// 	scn.LightSource.Pos.Y = 0
-			// 	scn.LightSource.Pos.X = -10
-			// }
 		}
 	}()
 
-	w.Resize(fyne.NewSize(width, height))
-
+	w.Resize(fyne.NewSize(width+50, height))
 	w.ShowAndRun()
-
-	// ws.Resize(fyne.NewSize(width, height))
-
-	// ws.ShowAndRun()
 }

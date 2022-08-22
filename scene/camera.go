@@ -14,12 +14,6 @@ type Camera struct {
 	VTarget  mymath.Vec3
 
 	VForward mymath.Vec3
-	// Aspect_ratio float64
-	// Hfov, Vfov float64
-
-	// Htrack, Vtrack float64
-	// Speed float64
-	//Center mymath.Vec3 // Camera is viewing center
 }
 
 func MakeCamera(pos mymath.Vec3) Camera {

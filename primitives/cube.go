@@ -6,6 +6,24 @@ import (
 	"tulip/scene"
 )
 
+func NewTriangle() *scene.Model {
+	t := new(scene.Model)
+
+	t.AddPoint(mymath.MakeVec4(5, 0, 0))    // 0
+	t.AddPoint(mymath.MakeVec4(0, 10, 0))       // 1
+	t.AddPoint(mymath.MakeVec4(-5, 0, 0))    // 2
+
+	t.AddPolygon(0, 1, 2, color.NRGBA{255, 0, 0, 255})
+
+	t.AddPoint(mymath.MakeVec4(5, 0, 1))    // 0
+	t.AddPoint(mymath.MakeVec4(0, 10, 1))       // 1
+	t.AddPoint(mymath.MakeVec4(-5, 0, 1))    // 2
+
+	t.AddPolygon(3, 4, 5, color.NRGBA{0, 0, 255, 255})
+
+	return t
+}
+
 func NewCube(side float64, center mymath.Vec3, clr color.NRGBA) *scene.Model {
 	cube := new(scene.Model)
 
